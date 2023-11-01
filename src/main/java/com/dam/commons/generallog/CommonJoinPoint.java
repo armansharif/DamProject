@@ -6,7 +6,7 @@ public class CommonJoinPoint {
 
     @Pointcut("execution(* com.dam.modules.dam.controller.DamController.*(..))")
     public void controllerExecution(){
-        System.out.println("====================controllerExecution");
+        System.out.println("====controllerExecution");
     };
 
 }

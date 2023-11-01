@@ -12,6 +12,7 @@ import com.dam.modules.dam.service.DamService;
 import liquibase.pro.packaged.is;
 import net.kaczmarzyk.spring.data.jpa.domain.Equal;
 import net.kaczmarzyk.spring.data.jpa.domain.Like;
+import net.kaczmarzyk.spring.data.jpa.domain.Null;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.Or;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
@@ -25,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
@@ -58,15 +60,15 @@ public class DamController {
     @GetMapping(value = {Routes.Get_damdari_dams})
     public ResponseEntity<Object> findDamsOfDamdari(
             @PathVariable(required = false) String damdariId,
-            @RequestParam(required = false, defaultValue = "0") String isFahli,
-            @RequestParam(required = false, defaultValue = "0") String hasLangesh,
-            @RequestParam(required = false, defaultValue = "1") String typeId,
+            @RequestParam(required = false) String isFahli,
+            @RequestParam(required = false) String hasLangesh,
+            @RequestParam(required = false) String typeId,
             @RequestParam(required = false, defaultValue = "id") String sort,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "10") int perPage,
+            @RequestParam(required = false, defaultValue = "20") int perPage,
             HttpServletResponse response) {
         try {
-            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId, isFahli,hasLangesh,typeId);
+            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId, isFahli, hasLangesh, typeId);
             return ResponseEntity.ok()
                     .body(damList);
         } catch (Exception e) {
@@ -76,6 +78,31 @@ public class DamController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    @GetMapping(value = {Routes.Get_dams_hasProblem, Routes.Get_dams_hasProblem_damdariId})
+    public ResponseEntity<Object> findDamsOfDamdariHasProblem(
+            @PathVariable(required = false) String damdariId,
+            @RequestParam(required = false, defaultValue = "1") String isFahli,
+            @RequestParam(required = false, defaultValue = "1") String hasLangesh,
+            @RequestParam(required = false, defaultValue = "1") String hasTab,
+            @RequestParam(required = false) String typeId,
+            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int perPage,
+            HttpServletResponse response) {
+        try {
+            List<Dam> damList = this.damService.findAllDamsOfDamdariHasProblem(sort, page, perPage, damdariId, isFahli, hasLangesh, hasTab, typeId);
+            return ResponseEntity.ok()
+                    .body(damList);
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @GetMapping(value = {Routes.Get_dams})
     public List<Dam> getAllDams(
@@ -100,7 +127,7 @@ public class DamController {
             HttpServletResponse response) {
         try {
             Dam dam = this.damService.findDam(damId).get();
-            dam.setDamStatus(this.damService.findAllDamStatus("id", 0, 100, damId));
+            dam.setLastDamStatus(this.damService.findLastDamStatus( damId));
             return ResponseEntity.ok()
                     .body(dam);
         } catch (Exception e) {

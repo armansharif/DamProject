@@ -1,6 +1,7 @@
 package com.dam.modules.user.service;
 
 
+import com.dam.commons.exception.UserServiceException;
 import com.dam.modules.convert.ConvertEnFa;
 import com.dam.modules.jwt.JwtUtils;
 
@@ -10,26 +11,23 @@ import com.dam.modules.user.model.Roles;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.repository.RolesRepository;
 import com.dam.modules.user.repository.UsersRepository;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.MessageSource;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -49,13 +47,15 @@ public class UserService implements UserDetailsService {
     private final RolesRepository rolesRepository;
     private UsersRepository usersRepository;
 
+    private MessageSource messageSource;
     private Environment env;
 
     @Autowired
-    public UserService(UsersRepository usersRepository, ConvertEnFa convertEnFa, SmsVerification smsVerification, RolesRepository rolesRepository, Environment env) {
+    public UserService(UsersRepository usersRepository, ConvertEnFa convertEnFa, SmsVerification smsVerification, RolesRepository rolesRepository, MessageSource messageSource, Environment env) {
         this.usersRepository = usersRepository;
         this.smsVerification = smsVerification;
         this.rolesRepository = rolesRepository;
+        this.messageSource = messageSource;
         this.env = env;
     }
 
@@ -78,9 +78,7 @@ public class UserService implements UserDetailsService {
             if (user != null) {
                 user.setPassword(smsCode);
                 this.usersRepository.save(user);
-
             } else if (registrationOnFirstLogin) {
-
                 Set<Roles> roles = new HashSet<>();
                 roles.add(rolesRepository.findRolesByName("user"));
                 user = new Users(mobile, smsCode, roles);
@@ -284,6 +282,10 @@ public class UserService implements UserDetailsService {
     }
 
     public Users findUserByMobile(String mobile) {
+//        if (userEntity == null) {
+//            throw new UserServiceException("User " + username + " not found");
+//        }
+
         return this.usersRepository.findByMobile(mobile);
     }
 
@@ -342,4 +344,16 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public Long getUserIdByToken(HttpServletRequest request) {
+        JwtUtils jwtUtils = new JwtUtils();
+        return jwtUtils.getUserId(request);
+    }
+
+    public Users getUserByToken(HttpServletRequest request) {
+        JwtUtils jwtUtils = new JwtUtils();
+        Users user = findUser(getUserIdByToken(request)).orElse(null);
+        if (user == null)
+            throw new UserServiceException(messageSource.getMessage("user.notFound", null, null));
+        return user;
+    }
 }

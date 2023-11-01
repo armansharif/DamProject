@@ -10,4 +10,8 @@ public class UserServiceException extends RuntimeException{
     {
         super(message);
     }
+
+//        if (userEntity == null) {
+//        throw new UserServiceException("User " + username + " not found");
+//    }
 }

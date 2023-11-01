@@ -1,7 +1,11 @@
 package com.dam.modules.user.model;
 
 import com.dam.modules.dam.model.Damdari;
+import com.dam.modules.notification.model.Notification;
+import com.dam.modules.ticketing.model.Ticket;
+import com.dam.modules.ticketing.model.TicketResponse;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 
@@ -26,7 +30,7 @@ public class Users implements Serializable, UserDetails {
     private Long id;
 
 
-    @Column(unique = true)
+    @Column(unique = false)
     private String email;
 
 
@@ -43,7 +47,7 @@ public class Users implements Serializable, UserDetails {
 
     private String refCode;
 
-    @Column(unique = true)
+    @Column(unique = false)
     private String username;
 
     @JsonIgnore
@@ -88,6 +92,7 @@ public class Users implements Serializable, UserDetails {
     private LocalDateTime updatedAt;
 
     @JsonManagedReference
+    @JsonIgnoreProperties({"dams"})
     @ManyToMany(fetch = FetchType.LAZY,
             cascade = {
                     CascadeType.PERSIST,
@@ -97,6 +102,15 @@ public class Users implements Serializable, UserDetails {
             joinColumns = { @JoinColumn(name = "user_id") },
             inverseJoinColumns = { @JoinColumn(name = "damdari_id") })
     private Set<Damdari> damdari = new HashSet<>();
+
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
+    private List<TicketResponse> responseList;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
+    private List<Ticket> ticketList;
 
     public Users() {
     }
@@ -145,6 +159,12 @@ public class Users implements Serializable, UserDetails {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
+    private List<Notification> notifications;
+
+
 
     /////////////////////////////////////////////////////
     @JsonIgnore
@@ -307,5 +327,37 @@ public class Users implements Serializable, UserDetails {
 
     public void setUserType(int userType) {
         this.userType = userType;
+    }
+
+    public Set<Damdari> getDamdari() {
+        return damdari;
+    }
+
+    public void setDamdari(Set<Damdari> damdari) {
+        this.damdari = damdari;
+    }
+
+    public List<TicketResponse> getResponseList() {
+        return responseList;
+    }
+
+    public void setResponseList(List<TicketResponse> responseList) {
+        this.responseList = responseList;
+    }
+
+    public List<Ticket> getTicketList() {
+        return ticketList;
+    }
+
+    public void setTicketList(List<Ticket> ticketList) {
+        this.ticketList = ticketList;
+    }
+
+    public List<Notification> getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(List<Notification> notifications) {
+        this.notifications = notifications;
     }
 }

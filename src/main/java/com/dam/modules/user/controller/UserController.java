@@ -6,6 +6,8 @@ import com.dam.modules.jwt.JwtUtils;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.AddressesService;
 import com.dam.modules.user.service.UserService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.kaczmarzyk.spring.data.jpa.domain.Like;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
@@ -558,7 +560,6 @@ public class UserController {
                 name = jwtUtils.urlDecode(name);
                 family = jwtUtils.urlDecode(family);
                 address = jwtUtils.urlDecode(address);
-
                 Users user_saved = userService.updateUser(user_id, name, family, null, null, null, null, address, file);
                 if (user_saved != null) {
                     return ResponseEntity.ok()

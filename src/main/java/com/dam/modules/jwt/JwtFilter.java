@@ -3,6 +3,7 @@ package com.dam.modules.jwt;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,8 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
     private final UserService userService;
 
+    @Value("${general.user.ignoreToken.enable}")
+    private boolean ignoreToken;
 
     @Autowired
     public JwtFilter(JwtUtils jwtUtils, UserService userService) {

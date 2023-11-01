@@ -25,14 +25,9 @@ public class Dam implements Serializable {
     private String name;
     private String photo;
     private String birthdate;
-
-
-    private String typeId = "1";
-
-
-    private String typeString = "cow";
-
-
+    //private String typeId = "1";
+  //  private String typeString = "cow";
+    private Long weight;
     @Transient
     @JsonIgnore
     private MultipartFile fileImage;
@@ -43,6 +38,7 @@ public class Dam implements Serializable {
 
     @Column(name = "created_at_server", updatable = false)
     @CreationTimestamp
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAtServer;
 
     @JsonIgnore
@@ -57,13 +53,46 @@ public class Dam implements Serializable {
 
 
 
-    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL )
     private List<DamStatus> damStatus;
 
     private int isFahli=0;
 
     private int hasLangesh=0;
 
-    private int avgOfShirdehi=0;
+    private int avgOfMilk=0;
 
+    private int hasTab=0;
+
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    private List<Milking> milking;
+
+
+    @JsonManagedReference
+    @ManyToOne
+    private Nejad nejad;
+
+    @JsonManagedReference
+    @ManyToOne
+    private Type type;
+
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    private List<HistoricalTab> historicalTabList;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    private List<HistoricalFahli> historicalFahliList;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    private List<HistoricalLangesh> historicalLangeshList;
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private DamStatus lastDamStatus;
 }
