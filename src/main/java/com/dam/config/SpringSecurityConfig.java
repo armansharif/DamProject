@@ -5,6 +5,7 @@ import com.dam.modules.jwt.JwtFilter;
 import com.dam.modules.user.service.UserService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,12 +27,14 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserService userService;
     private final DataSource dataSource;
     private final JwtFilter jwtFilter;
+    private MessageSource messageSource;
 
     @Autowired
-    public SpringSecurityConfig(DataSource dataSource, UserService userService, JwtFilter jwtFilter) {
+    public SpringSecurityConfig(DataSource dataSource, UserService userService, JwtFilter jwtFilter, MessageSource messageSource) {
         this.dataSource = dataSource;
         this.userService = userService;
         this.jwtFilter = jwtFilter;
+        this.messageSource = messageSource;
     }
 
 
@@ -65,7 +68,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                     response.getWriter().write(new JSONObject()
                             .put("status", "fail")
                             .put("code", HttpServletResponse.SC_FORBIDDEN)
-                            .put("message", "Your token has expired.")
+                            .put("message", messageSource.getMessage("user.token.expired", null, null))
                             .toString());
                 })
                 .accessDeniedHandler((request, response, e) ->
@@ -75,7 +78,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                     response.getWriter().write(new JSONObject()
                             .put("status", "fail")
                             .put("code", HttpServletResponse.SC_FORBIDDEN)
-                            .put("message", "You do not have access to this section")
+                            .put("message", messageSource.getMessage("user.access.denied", null, null))
                             .toString());
                 });
 

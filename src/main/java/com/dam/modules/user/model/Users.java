@@ -104,6 +104,7 @@ public class Users implements Serializable, UserDetails {
     private Set<Damdari> damdari = new HashSet<>();
 
 
+
     @JsonIgnore
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
     private List<TicketResponse> responseList;
@@ -111,6 +112,7 @@ public class Users implements Serializable, UserDetails {
     @JsonIgnore
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL)
     private List<Ticket> ticketList;
+
 
     public Users() {
     }

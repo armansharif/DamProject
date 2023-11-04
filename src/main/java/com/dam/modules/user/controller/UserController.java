@@ -8,6 +8,8 @@ import com.dam.modules.user.service.AddressesService;
 import com.dam.modules.user.service.UserService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import net.kaczmarzyk.spring.data.jpa.domain.Like;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
 import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
@@ -25,6 +27,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,8 +35,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import static com.dam.config.JsonResponseBodyTemplate.createResponseJson;
+
 @RestController
 @RequestMapping(produces = "application/json")
+@Api(value = "User Controller", description = "User controller for all user related action")
 public class UserController {
 
     Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -70,10 +76,10 @@ public class UserController {
     }
 
 
-
-
+    @ApiIgnore
     @GetMapping(value = {Routes.GET_users_by_id})
     // @PreAuthorize("hasAuthority('OP_ACCESS_USER')")
+    @ApiOperation(value = "Get a user by ID", response = ResponseEntity.class)
     public ResponseEntity<Object> getUser(@PathVariable(value = "id") Long id) {
         Users user = userService.findUser(id).orElse(null);
         if (user != null) {
@@ -120,25 +126,18 @@ public class UserController {
         JSONObject resJson = new JSONObject();
         Users user = userService.findUserByEmail(email);
         if (user == null) {
-            resJson.put("code", 401);
-            resJson.put("status", "fail");
-            resJson.put("message", "User not found");
-            return ResponseEntity.badRequest()
-                    .body(resJson.toString());
+            return new ResponseEntity<>(
+                    createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "User not found").toString(),
+                    HttpStatus.NOT_FOUND);
         } else {
             int res = userService.verificationUserByEmail(email);
             if (res > 0) {
-                resJson.put("code", 200);
-                resJson.put("status", "success");
-                resJson.put("message", "Verification code sent successfully.");
                 return ResponseEntity.ok()
-                        .body(resJson.toString());
+                        .body(createResponseJson("success", HttpStatus.OK.value(), "Verification code sent successfully.").toString());
             } else {
-                resJson.put("code", 401);
-                resJson.put("status", "fail");
-                resJson.put("message", "Unfortunately, there was a problem.");
-                return ResponseEntity.badRequest()
-                        .body(resJson.toString());
+                return new ResponseEntity<>(
+                        createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unfortunately, there was a problem.").toString(),
+                        HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
@@ -253,14 +252,12 @@ public class UserController {
             Users user_saved = userService.updateUser(user.getId(), name, family, email, mobile, username, password, address, file);
             if (user_saved == null) {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "Unfortunately, there was a problem.").toString(),
+                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "Unfortunately, there was a problem.").toString(),
                         HttpStatus.NOT_FOUND);
             }
         } catch (IOException e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok()
@@ -332,14 +329,12 @@ public class UserController {
             Users user_saved = userService.updateUser(user.getId(), name, family, email, mobile, username, password, address, file);
             if (user_saved == null) {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "User not found").toString(),
+                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "User not found").toString(),
                         HttpStatus.NOT_FOUND);
             }
         } catch (IOException e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok()
@@ -394,14 +389,12 @@ public class UserController {
             Users user_saved = userService.updateUser(user.getId(), null, null, null, mobile, null, password, null, null);
             if (user_saved == null) {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "Unfortunately, there was a problem.").toString(),
+                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "Unfortunately, there was a problem.").toString(),
                         HttpStatus.NOT_FOUND);
             }
         } catch (IOException e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok()
@@ -439,14 +432,12 @@ public class UserController {
             Users user_saved = userService.updateUser(user.getId(), null, null, email, null, null, password, null, null);
             if (user_saved == null) {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "User not found").toString(),
+                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "User not found").toString(),
                         HttpStatus.NOT_FOUND);
             }
         } catch (IOException e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok()
@@ -529,14 +520,12 @@ public class UserController {
                         .body(user_saved);
             } else {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), "The user is already registered with this phone number").toString(),
+                        createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), "The user is already registered with this phone number").toString(),
                         HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -566,22 +555,19 @@ public class UserController {
                             .body(user_saved);
                 } else {
                     return new ResponseEntity<>(
-                            JsonResponseBodyTemplate.
-                                    createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "user not found").toString(),
+                            createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "user not found").toString(),
                             HttpStatus.NOT_FOUND);
                 }
             } else {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "user not found").toString(),
+                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "user not found").toString(),
                         HttpStatus.NOT_FOUND);
             }
 
 
         } catch (Exception e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -594,12 +580,10 @@ public class UserController {
         try {
             this.addressesService.deleteAddresses(id);
             return ResponseEntity.ok()
-                    .body(JsonResponseBodyTemplate
-                            .createResponseJson("success", HttpStatus.OK.value(), "Address deleted successfully").toString());
+                    .body(createResponseJson("success", HttpStatus.OK.value(), "Address deleted successfully").toString());
         } catch (Exception e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -611,12 +595,10 @@ public class UserController {
         try {
             userService.deleteUser(id);
             return ResponseEntity.ok()
-                    .body(JsonResponseBodyTemplate
-                            .createResponseJson("success", response.getStatus(), "User deleted successfully").toString());
+                    .body(createResponseJson("success", response.getStatus(), "User deleted successfully").toString());
         } catch (Exception e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
@@ -636,14 +618,12 @@ public class UserController {
                         .body(this.addressesService.findAddressOfUser(user.get()));
             } else {
                 return new ResponseEntity<>(
-                        JsonResponseBodyTemplate.
-                                createResponseJson("fail", HttpStatus.FORBIDDEN.value(), "The user is not valid").toString(),
+                        createResponseJson("fail", HttpStatus.FORBIDDEN.value(), "The user is not valid").toString(),
                         HttpStatus.FORBIDDEN);
             }
         } catch (Exception e) {
             return new ResponseEntity<>(
-                    JsonResponseBodyTemplate.
-                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
