@@ -1,6 +1,7 @@
 package com.dam.modules.user.service;
 
 
+import com.dam.commons.exception.MyExceptionHandler;
 import com.dam.commons.exception.UserServiceException;
 import com.dam.modules.convert.ConvertEnFa;
 import com.dam.modules.jwt.JwtUtils;
@@ -23,11 +24,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -68,6 +71,13 @@ public class UserService implements UserDetailsService {
         //   return "code" + users.getMobile().substring((users.getMobile().length() - 4), users.getMobile().length());
     }
 
+    public void userValidation(String mobile) {
+         Users user = findUserByMobile(mobile);
+
+        if (user == null) {
+            throw new UserServiceException(messageSource.getMessage("user.notFound",null, Locale.getDefault()));
+        }
+    }
     public String verificationUser(String mobile) {
         env.getProperty("dam.urlUserImage");
 
@@ -353,7 +363,8 @@ public class UserService implements UserDetailsService {
         JwtUtils jwtUtils = new JwtUtils();
         Users user = findUser(getUserIdByToken(request)).orElse(null);
         if (user == null)
-            throw new UserServiceException(messageSource.getMessage("user.notFound", null, null));
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, messageSource.getMessage("user.notFound", null, Locale.getDefault()));
         return user;
     }
 }

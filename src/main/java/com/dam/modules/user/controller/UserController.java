@@ -160,17 +160,13 @@ public class UserController {
         JSONObject resJson = new JSONObject();
 
         if (res > 0) {
-            resJson.put("code", 200);
-            resJson.put("status", "success");
-            resJson.put("message", "Verification code sent successfully.");
             return ResponseEntity.ok()
-                    .body(resJson.toString());
+                    .body(createResponseJson("success", HttpStatus.OK.value(), "Verification code sent successfully.").toString());
+
         } else {
-            resJson.put("code", 401);
-            resJson.put("status", "fail");
-            resJson.put("message", "Unfortunately, there was a problem.");
-            return ResponseEntity.badRequest()
-                    .body(resJson.toString());
+            return new ResponseEntity<>(
+                    createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), "Unfortunately, there was a problem.").toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -193,24 +189,24 @@ public class UserController {
 
         if (user == null) {
             logger.info(" verification failed");
-            JSONObject unSuccessfulLogin = new JSONObject();
-            unSuccessfulLogin.put("code", response.getStatus());
-            unSuccessfulLogin.put("token", "");
-            unSuccessfulLogin.put("status", "fail");
-            unSuccessfulLogin.put("message", "The verification code has expired or was entered incorrectly.");
-            return ResponseEntity.badRequest().body(unSuccessfulLogin.toString());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("code", response.getStatus());
+            jsonObject.put("token", "");
+            jsonObject.put("status", "fail");
+            jsonObject.put("message", "The verification code has expired or was entered incorrectly.");
+            return ResponseEntity.badRequest().body(jsonObject.toString());
         }
 
 
 //        if (email != null) {
 //            if (userService.findUserByEmail(email) != null) {
 //                logger.info(" Email Exist");
-//                JSONObject unSuccessfulLogin = new JSONObject();
-//                unSuccessfulLogin.put("code", response.getStatus());
-//                unSuccessfulLogin.put("token", "");
-//                unSuccessfulLogin.put("status", "fail");
-//                unSuccessfulLogin.put("message", "Email already exist! please use another email.");
-//                return ResponseEntity.badRequest().body(unSuccessfulLogin.toString());
+//                JSONObject errJson = new JSONObject();
+//                errJson.put("code", response.getStatus());
+//                errJson.put("token", "");
+//                errJson.put("status", "fail");
+//                errJson.put("message", "Email already exist! please use another email.");
+//                return ResponseEntity.badRequest().body(errJson.toString());
 //            }
 //        }
 
@@ -218,33 +214,33 @@ public class UserController {
 //            Users userCheck = userService.findUserByUserName(username);
 //            if (userCheck != null) {
 //                logger.info(" username exist");
-//                JSONObject unSuccessfulLogin = new JSONObject();
-//                unSuccessfulLogin.put("code", response.getStatus());
-//                unSuccessfulLogin.put("token", "");
-//                unSuccessfulLogin.put("status", "fail");
-//                unSuccessfulLogin.put("message", "UserName already exist! please use UserName.");
-//                return ResponseEntity.badRequest().body(unSuccessfulLogin.toString());
+//                JSONObject errJson = new JSONObject();
+//                errJson.put("code", response.getStatus());
+//                errJson.put("token", "");
+//                errJson.put("status", "fail");
+//                errJson.put("message", "UserName already exist! please use UserName.");
+//                return ResponseEntity.badRequest().body(errJson.toString());
 //            }
 //        }
         boolean isverify = false;
-        JSONObject successfulLogin = new JSONObject();
-        JSONObject unSuccessfulLogin = new JSONObject();
+        JSONObject okJson = new JSONObject();
+        JSONObject errJson = new JSONObject();
         if (!userService.checkVerificationUser(mobile, code).isPresent()) {
             logger.info(" verification failed");
 
-            unSuccessfulLogin.put("code", response.getStatus());
-            unSuccessfulLogin.put("token", "");
-            unSuccessfulLogin.put("status", "fail");
-            unSuccessfulLogin.put("message", "The verification code has expired or was entered incorrectly.");
-            return ResponseEntity.badRequest().body(unSuccessfulLogin.toString());
+            errJson.put("code", response.getStatus());
+            errJson.put("token", "");
+            errJson.put("status", "fail");
+            errJson.put("message", "The verification code has expired or was entered incorrectly.");
+            return ResponseEntity.badRequest().body(errJson.toString());
         } else {
             String token = jwtUtils.generateToken(username, user.getId());
             response.addHeader("Authorization", token);
 
-            successfulLogin.put("code", response.getStatus());
-            successfulLogin.put("token", token);
-            successfulLogin.put("status", "success");
-            successfulLogin.put("message", "The token was created successfully. ");
+            okJson.put("code", response.getStatus());
+            okJson.put("token", token);
+            okJson.put("status", "success");
+            okJson.put("message", "The token was created successfully. ");
             logger.info(" verification successful");
         }
         //update user
@@ -261,7 +257,7 @@ public class UserController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok()
-                .body(successfulLogin.toString());
+                .body(okJson.toString());
     }
 
 

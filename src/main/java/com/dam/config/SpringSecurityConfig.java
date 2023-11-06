@@ -64,10 +64,10 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint((request, response, e) ->
                 {
                     response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.getWriter().write(new JSONObject()
                             .put("status", "fail")
-                            .put("code", HttpServletResponse.SC_FORBIDDEN)
+                            .put("code", HttpServletResponse.SC_UNAUTHORIZED)
                             .put("message", messageSource.getMessage("user.token.expired", null, null))
                             .toString());
                 })
