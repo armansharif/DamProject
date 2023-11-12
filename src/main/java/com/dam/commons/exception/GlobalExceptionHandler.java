@@ -13,12 +13,11 @@ import java.util.Date;
 import java.util.Locale;
 
 @ControllerAdvice
-
-public class GlobalExceptionHandlar {
+public class GlobalExceptionHandler {
     MessageSource messageSource;
 
     @Autowired
-    public GlobalExceptionHandlar(MessageSource messageSource) {
+    public GlobalExceptionHandler(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 
