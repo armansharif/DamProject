@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,7 +128,7 @@ public class DamController {
             HttpServletResponse response) {
         try {
             Dam dam = this.damService.findDam(damId).get();
-            dam.setLastDamStatus(this.damService.findLastDamStatus( damId));
+            dam.setLastDamStatus(this.damService.findLastDamStatus(damId));
             return ResponseEntity.ok()
                     .body(dam);
         } catch (Exception e) {
@@ -244,6 +245,31 @@ public class DamController {
         }
     }
 
+    @PostMapping(value = {Routes.POST_data})
+    public ResponseEntity<Object> getData(@RequestParam(required = false) String data, HttpServletResponse response, HttpServletRequest request) {
+        try {
+
+            damService.addSampleData("DATA:" + data);
+            Enumeration headerNames = request.getHeaderNames();
+            while (headerNames.hasMoreElements()) {
+                String key = (String) headerNames.nextElement();
+                String value = request.getHeader(key);
+                damService.addSampleData("KEY:" + key + " | VALUE:" + value);
+            }
+            damService.addSampleData("QueryString:" + request.getQueryString());
+
+
+            return ResponseEntity.ok()
+                    .body(JsonResponseBodyTemplate
+                            .createResponseJson("success", response.getStatus(), "Data saved successfully").toString());
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
 //
 //    @PutMapping(value = {"/dam/check", "/dam/check/"})
 //    public ResponseEntity<Object> checkDam(

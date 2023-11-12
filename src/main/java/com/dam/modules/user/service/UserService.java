@@ -1,8 +1,7 @@
 package com.dam.modules.user.service;
 
 
-import com.dam.commons.exception.MyExceptionHandler;
-import com.dam.commons.exception.UserServiceException;
+
 import com.dam.modules.convert.ConvertEnFa;
 import com.dam.modules.jwt.JwtUtils;
 
@@ -75,7 +74,7 @@ public class UserService implements UserDetailsService {
          Users user = findUserByMobile(mobile);
 
         if (user == null) {
-            throw new UserServiceException(messageSource.getMessage("user.notFound",null, Locale.getDefault()));
+            throw  new ResponseStatusException(HttpStatus.NOT_FOUND,"user.notFound");
         }
     }
     public String verificationUser(String mobile) {
@@ -292,9 +291,7 @@ public class UserService implements UserDetailsService {
     }
 
     public Users findUserByMobile(String mobile) {
-//        if (userEntity == null) {
-//            throw new UserServiceException("User " + username + " not found");
-//        }
+
 
         return this.usersRepository.findByMobile(mobile);
     }

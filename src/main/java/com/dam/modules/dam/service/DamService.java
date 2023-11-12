@@ -1,13 +1,10 @@
 package com.dam.modules.dam.service;
 
-import com.dam.commons.Consts;
-import com.dam.modules.dam.model.Dam;
-import com.dam.modules.dam.model.DamStatus;
-import com.dam.modules.dam.model.Dashboard;
-import com.dam.modules.dam.model.DynamicCharts;
+import com.dam.modules.dam.model.*;
 import com.dam.modules.dam.repository.DamStatusRepository;
 import com.dam.modules.dam.repository.DamRepository;
 
+import com.dam.modules.dam.repository.SampleDataRepository;
 import com.dam.modules.ticketing.consts.ConstTicketing;
 import com.dam.modules.ticketing.repository.TicketRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,14 +31,16 @@ public class DamService {
     private static final Logger LOG = Logger.getLogger(DamService.class.getName());
     private DamRepository damRepository;
     private TicketRepository ticketRepository;
+    private SampleDataRepository sampleDataRepository;
 
 
     private DamStatusRepository damStatusRepository;
 
     @Autowired
-    public DamService(DamRepository damRepository, TicketRepository ticketRepository, DamStatusRepository damStatusRepository) {
+    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamStatusRepository damStatusRepository) {
         this.damRepository = damRepository;
         this.ticketRepository = ticketRepository;
+        this.sampleDataRepository = sampleDataRepository;
         this.damStatusRepository = damStatusRepository;
     }
 
@@ -74,6 +73,13 @@ public class DamService {
             dam.setPhoto(urlImages + "/" + fileNameImage);
         }
         return dam_saved;
+    }
+
+    @Transactional
+    public SampleData addSampleData(String data) throws IOException {
+        SampleData s = new SampleData();
+        s.setData(data);
+        return sampleDataRepository.save(s);
     }
 
     @Transactional

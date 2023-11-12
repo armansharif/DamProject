@@ -25,7 +25,6 @@ public class TicketController {
 
     @GetMapping(value = {Routes.GET_tickets})
     public List<Ticket> getTicketsByToken(HttpServletRequest request) {
-
         return ticketService.findTicketOfUser(request);
     }
 
@@ -56,5 +55,10 @@ public class TicketController {
                                     @PathVariable Long id,
                                     @RequestParam String response) {
         return ticketService.addResponseTicket(request, id, response);
+    }
+
+    @GetMapping(value = {Routes.GET_ticket})
+    public Ticket getTicketById(HttpServletRequest request, @PathVariable Long id) {
+        return ticketService.findTicketById(id);
     }
 }

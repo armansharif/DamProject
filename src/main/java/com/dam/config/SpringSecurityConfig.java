@@ -54,7 +54,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                         Routes.POST_reset_pass_mobile,
                         Routes.POST_admin_login,
                         Routes.POST_forget_pass_email,
-                        Routes.POST_forget_pass_mobile
+                        Routes.POST_forget_pass_mobile,
+                        Routes.POST_data
                 ).permitAll()
                 .antMatchers("/upload/**", "/test/**").permitAll()//   "/dam/**"
                 .anyRequest().authenticated()

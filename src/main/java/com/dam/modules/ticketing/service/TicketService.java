@@ -1,7 +1,6 @@
 package com.dam.modules.ticketing.service;
 
-import com.dam.commons.exception.UserServiceException;
-import com.dam.modules.ticketing.consts.ConstTicketing;
+ import com.dam.modules.ticketing.consts.ConstTicketing;
 import com.dam.modules.ticketing.model.Ticket;
 import com.dam.modules.ticketing.model.TicketCategory;
 import com.dam.modules.ticketing.model.TicketResponse;
@@ -17,7 +16,9 @@ import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -57,10 +58,12 @@ public class TicketService {
     }
 
     public List<Ticket> findTicketOfUser(HttpServletRequest request) {
-
-
         Users user = userService.getUserByToken(request);
         return ticketRepository.findAllByUsers(user);
+    }
+
+    public Ticket findTicketById(Long id) {
+        return ticketRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ticket.notFound"));
     }
 
     public Ticket addTicket(HttpServletRequest request, Long categoryId, String title, String content) {
@@ -89,7 +92,7 @@ public class TicketService {
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(RuntimeException::new);
 
         if (ticket.getStatus() == ConstTicketing.TICKET_STATUS_CLOSED) {
-            throw new UserServiceException(messageSource.getMessage("ticket.closed",null,Locale.getDefault()));
+             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"ticket.closed");
         }
         // check user is admin Or user is ownerOf ticket
 

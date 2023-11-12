@@ -1,13 +1,10 @@
 package com.dam.modules.user.controller;
 
 import com.dam.commons.Routes;
-import com.dam.config.JsonResponseBodyTemplate;
 import com.dam.modules.jwt.JwtUtils;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.AddressesService;
 import com.dam.modules.user.service.UserService;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import net.kaczmarzyk.spring.data.jpa.domain.Like;
