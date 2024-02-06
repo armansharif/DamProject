@@ -59,5 +59,5 @@ public class Damdari {
 
     @JsonIgnore
     @OneToMany(mappedBy = "damdari", cascade = CascadeType.ALL)
-    private List<Fodder> fodder;
+    private List<Resource> resource;
 }

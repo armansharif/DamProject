@@ -1,6 +1,5 @@
 package com.dam.modules.dam.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -12,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class Fodder {
+public class Resource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +29,8 @@ public class Fodder {
     private LocalDateTime updatedAt;
 
     private Long amount;
+
+    private Long type;
 
     @JsonIgnore
     @ManyToOne

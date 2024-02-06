@@ -20,5 +20,7 @@ public interface DamdariRepository extends JpaRepository<Damdari,Long> {
     @Query(nativeQuery = true, value = "select * from damdari ")
     List<Damdari> findAllDamdari(Pageable pageable);
 
+    Damdari findDamdariById(Long id);
+
 
 }

@@ -8,6 +8,8 @@ import com.dam.modules.dam.model.Dashboard;
 import com.dam.modules.dam.service.DamService;
 import com.dam.modules.dam.service.DamdariService;
 import com.dam.modules.user.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,12 +34,16 @@ public class DashboardController {
         this.damdariService = damdariService;
         this.damService = damService;
     }
+
+    @ApiOperation(value = "DateFormat = 1402-02-20" )
     @GetMapping(value = {Routes.Get_dashboard,Routes.Get_dashboard_damdariId})
     public ResponseEntity<Object> getDashboard(
             @PathVariable(required = false) String damdariId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
             HttpServletResponse response) {
         try {
-           Dashboard dashboard = damService.getDashboardData(damdariId);
+           Dashboard dashboard = damService.getDashboardData(damdariId,fromDate,toDate);
             return ResponseEntity.ok()
                     .body(dashboard);
         } catch (Exception e) {

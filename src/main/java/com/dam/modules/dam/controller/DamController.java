@@ -143,11 +143,12 @@ public class DamController {
     public ResponseEntity<Object> findDamStatus(
             @PathVariable String damId,
             @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "0") int sortType,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int perPage,
             HttpServletResponse response) {
         try {
-            List<DamStatus> damStatusList = this.damService.findAllDamStatus(sort, page, perPage, damId);
+            List<DamStatus> damStatusList = this.damService.findAllDamStatus(sort, page, perPage, damId,sortType);
             return ResponseEntity.ok()
                     .body(damStatusList);
         } catch (Exception e) {
@@ -245,20 +246,14 @@ public class DamController {
         }
     }
 
-    @PostMapping(value = {Routes.POST_data})
-    public ResponseEntity<Object> getData(@RequestParam(required = false) String data, HttpServletResponse response, HttpServletRequest request) {
+    @RequestMapping(value = {Routes.POST_data}, method = { RequestMethod.GET, RequestMethod.POST })
+    public ResponseEntity<Object> getData(@RequestBody String body,@RequestParam(required = false) String data, HttpServletResponse response ) {
         try {
 
             damService.addSampleData("DATA:" + data);
-            Enumeration headerNames = request.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                String key = (String) headerNames.nextElement();
-                String value = request.getHeader(key);
-                damService.addSampleData("KEY:" + key + " | VALUE:" + value);
-            }
-            damService.addSampleData("QueryString:" + request.getQueryString());
+            damService.addSampleData("body:" + body);
 
-
+            damService.importData(body);
             return ResponseEntity.ok()
                     .body(JsonResponseBodyTemplate
                             .createResponseJson("success", response.getStatus(), "Data saved successfully").toString());

@@ -1,5 +1,6 @@
 package com.dam.modules.dam.repository;
 
+import com.dam.commons.Consts;
 import com.dam.modules.dam.model.Dam;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,8 +22,13 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
     String fullDateStringOrder = " order by pyear(created_at) DESC, PMONTH(created_at) DESC, pday(created_at) DESC ";
     String yearMonthDateStringOrder = " order by pyear(created_at) DESC, PMONTH(created_at) DESC  ";
 
+    String fromDateToDateWhereCondition = " AND ( :fromDate is null or  pdate(created_at) >= :fromDate)     " +
+            " AND ( :toDate is null or  pdate(created_at) <= :toDate)  ";
+
     @Query(nativeQuery = true, value = "select * from dam ")
     List<Dam> getDams(Pageable pageable);
+
+    Optional<Dam> findDamByDeviceId(String deviceId);
 
     List<Dam> findAll(Specification<Dam> spec, Pageable pageable);
 
@@ -39,6 +45,11 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             " ")
     List<Dam> findDamsOfDamdari(@Param("damdariId") String damdariId, @Param("isFahli") String isFahli, @Param("hasLangesh") String hasLangesh, @Param("typeId") String typeId, Pageable pageable);
 
+    @Query(nativeQuery = true, value = "select count(1) from  dam d , dam_flag df ,flag f  WHERE " +
+            "  d.id = df.dam_id AND df.flag_id = f.id AND " +
+            "( :damdariId is null or  damdari_id =:damdariId) and f.id in ( :flags )     " +
+            " ")
+    Long countOf(@Param("damdariId") String damdariId, @Param("flags") List<String> flags);
 
     @Query(nativeQuery = true, value = "select count(1) from dam   WHERE is_fahli = 1  and " +
             "( :damdariId is null or  damdari_id =:damdariId)     " +
@@ -71,6 +82,10 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     ")
     Long avgOfMilk(@Param("damdariId") String damdariId);
 
+    @Query(nativeQuery = true, value = "select SUM(ph)/count(*) avg from dam_status   WHERE 1=1  and  " +
+            " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     ")
+    Long avgOfPH(@Param("damdariId") String damdariId);
+
 
     @Query(nativeQuery = true, value = "select  (select name from type where id=type_id), count(*) from dam WHERE 1=1 and " +
             "( :damdariId is null or  damdari_id =:damdariId)     " +
@@ -92,23 +107,54 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
     List<ChartDto> locationOfDamChartDto(@Param("damdariId") String damdariId);
 
     @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "  AS title, SUM(amount) AS value " +
-            "  from fodder WHERE 1=1 and " +
-            " ( :damdariId is null or  damdari_id =:damdariId)     " +
+            "  from resource WHERE 1=1 and type = " + Consts.TYPE_OF_RESOURCE_FODDER + " and " +
+            " ( :damdariId is null or  damdari_id =:damdariId)     "
+            + fromDateToDateWhereCondition +
             "   GROUP BY   " +
             "        PMONTH(created_at), " +
             "        pyear(created_at)" +
             yearMonthDateStringOrder)
-    List<ChartDto> amountOfFodderChartDto(@Param("damdariId") String damdariId);
+    List<ChartDto> amountOfFodderChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
+    @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "  AS title, SUM(amount) AS value " +
+            "  from resource WHERE 1=1 and type = " + Consts.TYPE_OF_RESOURCE_WATER + " and " +
+            " ( :damdariId is null or  damdari_id =:damdariId)     " +
+            fromDateToDateWhereCondition +
+            "   GROUP BY   " +
+            "        PMONTH(created_at), " +
+            "        pyear(created_at)" +
+            yearMonthDateStringOrder)
+    List<ChartDto> amountOfWaterChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
     @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title, SUM(liter) AS value " +
             "  from milking WHERE 1=1 and " +
             " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     " +
+            fromDateToDateWhereCondition +
             "   GROUP BY pday(created_at),  " +
             "        PMONTH(created_at), " +
             "        pyear(created_at)" +
             fullDateStringOrder)
-    List<ChartDto> amountOfMilkingChartDto(@Param("damdariId") String damdariId);
+    List<ChartDto> amountOfMilkingChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
+
+    @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title, SUM(ph)/count(*) AS value " +
+            "  from dam_status WHERE 1=1 and " +
+            " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     " +
+            fromDateToDateWhereCondition +
+            "   GROUP BY pday(created_at),  " +
+            "        PMONTH(created_at), " +
+            "        pyear(created_at)" +
+            fullDateStringOrder)
+    List<ChartDto> avgOfPhChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
+
+    @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title, SUM(temperature)/count(*) AS value " +
+            "  from dam_status WHERE 1=1 and " +
+            " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     " +
+            fromDateToDateWhereCondition +
+            "   GROUP BY pday(created_at),  " +
+            "        PMONTH(created_at), " +
+            "        pyear(created_at)" +
+            fullDateStringOrder)
+    List<ChartDto> avgOfTemperatureChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
     @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "    AS title, count(*) AS value " +
             "  from dam WHERE 1=1 and " +
@@ -177,4 +223,9 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             "        pyear(created_at)" +
             yearMonthDateStringOrder)
     List<ChartDto> historicalFahliOfDamChartDto(@Param("damdariId") String damdariId);
+
+    List<Dam> findDamsByFlagsIn(List list);
+
+    Long countDamsByFlagsIn(List list);
+
 }

@@ -11,7 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -23,6 +25,7 @@ public class Dam implements Serializable {
     private Long id;
 
     private String name;
+    private String deviceId;
     private String photo;
     private String birthdate;
     //private String typeId = "1";
@@ -56,15 +59,25 @@ public class Dam implements Serializable {
     @JsonIgnore
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL )
     private List<DamStatus> damStatus;
-
-    private int isFahli=0;
-
-    private int hasLangesh=0;
-
     private int avgOfMilk=0;
 
+    private int isFahli=0;
+    private int isShiri=0;
+    private int isBardar=0;
+
+    private int hasLangesh=0;
     private int hasTab=0;
 
+    private int needCare=0;
+
+
+
+    @JsonManagedReference
+    @ManyToMany
+    @JoinTable(name = "dam_flag",
+            joinColumns = { @JoinColumn(name = "dam_id") },
+            inverseJoinColumns = { @JoinColumn(name = "flag_id") })
+    private Set<Flag> flags = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)

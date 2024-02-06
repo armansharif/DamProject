@@ -1,7 +1,6 @@
 package com.dam.modules.user.service;
 
 
-
 import com.dam.modules.convert.ConvertEnFa;
 import com.dam.modules.jwt.JwtUtils;
 
@@ -71,12 +70,13 @@ public class UserService implements UserDetailsService {
     }
 
     public void userValidation(String mobile) {
-         Users user = findUserByMobile(mobile);
+        Users user = findUserByMobile(mobile);
 
         if (user == null) {
-            throw  new ResponseStatusException(HttpStatus.NOT_FOUND,"user.notFound");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user.notFound");
         }
     }
+
     public String verificationUser(String mobile) {
         env.getProperty("dam.urlUserImage");
 
@@ -257,6 +257,9 @@ public class UserService implements UserDetailsService {
         } catch (Exception e) {
             logger.info(e.getMessage());
         }
+        if(user_saved==null){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, messageSource.getMessage("public.hasProblem", null, null));
+        }
         return this.usersRepository.save(user.orElse(null));
     }
 
@@ -291,9 +294,10 @@ public class UserService implements UserDetailsService {
     }
 
     public Users findUserByMobile(String mobile) {
-
-
-        return this.usersRepository.findByMobile(mobile);
+        Users user = this.usersRepository.findByMobile(mobile);
+        if (user == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messageSource.getMessage("user.notFound", null, null));
+        return user;
     }
 
     public Users findUserByUserName(String username) {
@@ -310,8 +314,11 @@ public class UserService implements UserDetailsService {
 
     }
 
-    public Optional<Users> checkVerificationUser(String mobile, String code) {
-        return usersRepository.validateVerificationCode(mobile, code);
+    public Users checkVerificationUser(String mobile, String code) {
+        Users user = usersRepository.validateVerificationCode(mobile, code).orElse(null);
+        if (user == null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messageSource.getMessage("user.token.expired", null, null));
+        return user;
     }
 
     public boolean checkVerificationUserCMCOM(Users user, String code) throws IOException {

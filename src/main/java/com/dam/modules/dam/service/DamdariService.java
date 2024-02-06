@@ -30,5 +30,8 @@ public class DamdariService {
         return damdariRepository.findAllDamdari(sortedAndPagination);
     }
 
+    public Damdari findDamdari(Long id){
+        return damdariRepository.findDamdariById(id);
+    }
 
 }

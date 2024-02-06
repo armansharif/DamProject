@@ -1,6 +1,7 @@
 package com.dam.modules.user.controller;
 
 import com.dam.commons.Routes;
+import com.dam.enums.Authority;
 import com.dam.modules.jwt.JwtUtils;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.AddressesService;
@@ -104,16 +105,9 @@ public class UserController {
     public String forgetPassUser(@RequestParam String mobile, HttpServletResponse response) {
         logger.info("try to reset pass.");
         mobile = jwtUtils.arabicToDecimal(mobile);
-        Users user = userService.findUserByMobile(mobile);
-        if (user == null) {
-            JSONObject resJson = new JSONObject();
-            resJson.put("code", 401);
-            resJson.put("status", "fail");
-            resJson.put("message", "user not found");
-            return resJson.toString();
-        } else {
-            return userService.verificationUserCM(mobile);
-        }
+        userService.findUserByMobile(mobile);
+        return userService.verificationUserCM(mobile);
+
     }
 
     @PostMapping(value = {Routes.POST_forget_pass_email}, produces = "application/json")
@@ -172,8 +166,8 @@ public class UserController {
     public ResponseEntity<?> verificationUser(
             @RequestParam String mobile,
             @RequestParam String code,
-            @RequestParam String username,
-            @RequestParam String password,
+            @RequestParam (required = false) String username,
+            @RequestParam (required = false) String password,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String family,
             @RequestParam(required = false) String email,
@@ -182,72 +176,27 @@ public class UserController {
             HttpServletResponse response) {
         mobile = jwtUtils.arabicToDecimal(mobile);
 
+
+
         Users user = userService.findUserByMobile(mobile);
-
-        if (user == null) {
-            logger.info(" verification failed");
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("code", response.getStatus());
-            jsonObject.put("token", "");
-            jsonObject.put("status", "fail");
-            jsonObject.put("message", "The verification code has expired or was entered incorrectly.");
-            return ResponseEntity.badRequest().body(jsonObject.toString());
-        }
-
-
-//        if (email != null) {
-//            if (userService.findUserByEmail(email) != null) {
-//                logger.info(" Email Exist");
-//                JSONObject errJson = new JSONObject();
-//                errJson.put("code", response.getStatus());
-//                errJson.put("token", "");
-//                errJson.put("status", "fail");
-//                errJson.put("message", "Email already exist! please use another email.");
-//                return ResponseEntity.badRequest().body(errJson.toString());
-//            }
-//        }
-
-//        if (username != null) {
-//            Users userCheck = userService.findUserByUserName(username);
-//            if (userCheck != null) {
-//                logger.info(" username exist");
-//                JSONObject errJson = new JSONObject();
-//                errJson.put("code", response.getStatus());
-//                errJson.put("token", "");
-//                errJson.put("status", "fail");
-//                errJson.put("message", "UserName already exist! please use UserName.");
-//                return ResponseEntity.badRequest().body(errJson.toString());
-//            }
-//        }
-        boolean isverify = false;
         JSONObject okJson = new JSONObject();
-        JSONObject errJson = new JSONObject();
-        if (!userService.checkVerificationUser(mobile, code).isPresent()) {
-            logger.info(" verification failed");
+        userService.checkVerificationUser(mobile, code);
+        String token = jwtUtils.generateToken(mobile, user.getId());
+        response.addHeader("Authorization", token);
 
-            errJson.put("code", response.getStatus());
-            errJson.put("token", "");
-            errJson.put("status", "fail");
-            errJson.put("message", "The verification code has expired or was entered incorrectly.");
-            return ResponseEntity.badRequest().body(errJson.toString());
-        } else {
-            String token = jwtUtils.generateToken(username, user.getId());
-            response.addHeader("Authorization", token);
+       boolean isAdmin= user.getRoles().stream()
+                .filter(c -> c.getName().equals("admin"))
+                .findFirst()
+                .isPresent();
+        okJson.put("code", response.getStatus());
+        okJson.put("token", token);
+        okJson.put("status", "success");
+        okJson.put("isAdmin", isAdmin);
+        okJson.put("message", "The token was created successfully. ");
+        logger.info(" verification successful");
 
-            okJson.put("code", response.getStatus());
-            okJson.put("token", token);
-            okJson.put("status", "success");
-            okJson.put("message", "The token was created successfully. ");
-            logger.info(" verification successful");
-        }
-        //update user
         try {
-            Users user_saved = userService.updateUser(user.getId(), name, family, email, mobile, username, password, address, file);
-            if (user_saved == null) {
-                return new ResponseEntity<>(
-                        createResponseJson("fail", HttpStatus.NOT_FOUND.value(), "Unfortunately, there was a problem.").toString(),
-                        HttpStatus.NOT_FOUND);
-            }
+             userService.updateUser(user.getId(), name, family, email, mobile, username, password, address, file);
         } catch (IOException e) {
             return new ResponseEntity<>(
                     createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
@@ -343,15 +292,7 @@ public class UserController {
             HttpServletResponse response) {
         mobile = jwtUtils.arabicToDecimal(mobile);
         Users user = userService.findUserByMobile(mobile);
-        if (user == null) {
-            logger.info(" verification failed");
-            JSONObject unSuccessfulLogin = new JSONObject();
-            unSuccessfulLogin.put("code", response.getStatus());
-            unSuccessfulLogin.put("token", "");
-            unSuccessfulLogin.put("status", "fail");
-            unSuccessfulLogin.put("message", "The verification code has expired or was entered incorrectly.");
-            return ResponseEntity.badRequest().body(unSuccessfulLogin.toString());
-        }
+
         boolean isverify = false;
         try {
             isverify = userService.checkVerificationUserCMCOM(user, code);

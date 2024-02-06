@@ -41,8 +41,10 @@ public class Users implements Serializable, UserDetails {
 
     @JsonIgnore
     private String password;
+    @JsonIgnore
     private boolean enabled = true;
 
+    @JsonIgnore
     private String code;
 
     private String refCode;

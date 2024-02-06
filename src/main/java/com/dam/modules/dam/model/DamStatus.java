@@ -29,12 +29,16 @@ public class DamStatus implements Serializable {
     private Long gYROY;
     private Long gYROZ;
 
+
     @Column(precision=8, scale=2)
     private Float pH;
     private Long activeId;
     private Long settingConf;
     private String datetime;
-    private Long temperature;
+
+    @Column(precision=8, scale=2)
+    private Float temperature;
+
     @Lob
     @Column(length = 1000)
     private String description;
