@@ -56,4 +56,7 @@ public class Routes {
     public final static String Get_dashboard_damdariId = "/dashboard/{damdariId}";
 
     public final static String POST_data = "/data";
+
+    public final static String POST_damdari_param = "/damdari/{damdariId}/param";
+    public final static String GET_damdari_param = "/damdari/{damdariId}/param";
 }

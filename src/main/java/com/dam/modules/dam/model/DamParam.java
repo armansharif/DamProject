@@ -16,6 +16,8 @@ public class DamParam {
 
     private String name;
 
+    private String farsiName;
+
     @Column(precision=8, scale=2)
     private Float min;
 
@@ -24,7 +26,7 @@ public class DamParam {
 
     @JsonIgnore
     @ManyToOne
-    private Type type;
+    private Damdari damdari;
 
 
 }

@@ -35,7 +35,4 @@ public class Type {
     @OneToMany(mappedBy = "type", cascade = CascadeType.ALL)
     private List<Dam> dam;
 
-    @JsonBackReference
-    @OneToMany(mappedBy = "type", cascade = CascadeType.ALL)
-    private List<DamParam> damParams;
 }

@@ -60,4 +60,8 @@ public class Damdari {
     @JsonIgnore
     @OneToMany(mappedBy = "damdari", cascade = CascadeType.ALL)
     private List<Resource> resource;
+
+    @JsonBackReference
+    @OneToMany(mappedBy = "damdari", cascade = CascadeType.ALL)
+    private List<DamParam> damParams;
 }
