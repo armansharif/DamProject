@@ -45,7 +45,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 //  .cors().disable()
                 .authorizeRequests()
                 .antMatchers(
-                         "/dam/**",
+               //          "/dam/**",
                         Routes.POST_user_verify_email,
                         Routes.POST_user_verify_mobile,
                         Routes.POST_user_auth_email,
