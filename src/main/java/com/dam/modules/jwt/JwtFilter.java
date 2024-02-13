@@ -4,11 +4,13 @@ import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -46,6 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     String username = jwtUtils.getUsername(jwt);
                     if (username != null) {
                         Users users = (Users) userService.loadUserByUsername(username);
+                        userService.userValidation(username);
 
                         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                                 new UsernamePasswordAuthenticationToken(users, null, users.getAuthorities());

@@ -70,8 +70,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void userValidation(String mobile) {
-        Users user = findUserByMobile(mobile);
-
+        Users user = findUserByUserName(mobile);
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "user.notFound");
         }
@@ -301,7 +300,7 @@ public class UserService implements UserDetailsService {
     }
 
     public Users findUserByUserName(String username) {
-        return this.usersRepository.findByUsername(username);
+        return this.usersRepository.findByUsernameOrMobile(username);
     }
 
     public Users findUserByEmail(String email) {
@@ -310,7 +309,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return usersRepository.findByUsername(username);
+        return usersRepository.findByUsernameOrMobile(username);
 
     }
 

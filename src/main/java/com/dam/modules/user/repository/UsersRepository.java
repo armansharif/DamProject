@@ -18,7 +18,8 @@ public interface UsersRepository extends JpaRepository<Users, Long> {
 
     Users findByMobile(String mobile);
 
-    Users findByUsername(String username);
+    @Query(nativeQuery = true, value = "select * from users where mobile =:username OR username=:username ")
+    Users findByUsernameOrMobile(String username);
 
     Users findByMobileAndAdminPasswordAndAdminPasswordIsNotNull(String mobile, String adminPassword);
 

@@ -211,16 +211,16 @@ public class UserController {
     public ResponseEntity<?> verificationUserByEmail(
             @RequestParam String email,
             @RequestParam String code,
-            @RequestParam String username,
+            @RequestParam(required = false) String username,
             @RequestParam String password,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String family,
-            @RequestParam(required = false) String mobile,
+            @RequestParam String mobile,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) MultipartFile file,
             HttpServletResponse response) {
 
-
+        username=mobile;
         Users user = userService.checkVerificationUser(mobile, email, code);
         if (user == null) {
             logger.info(" verification failed");
