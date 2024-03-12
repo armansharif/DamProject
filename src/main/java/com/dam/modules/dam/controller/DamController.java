@@ -2,9 +2,7 @@ package com.dam.modules.dam.controller;
 
 import com.dam.commons.Routes;
 import com.dam.config.JsonResponseBodyTemplate;
-import com.dam.modules.dam.model.Dam;
-import com.dam.modules.dam.model.DamStatus;
-import com.dam.modules.dam.model.Damdari;
+import com.dam.modules.dam.model.*;
 import com.dam.modules.jwt.JwtUtils;
 import com.dam.modules.user.model.Users;
 import com.dam.modules.user.service.UserService;
@@ -32,9 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping(produces = "application/json")
@@ -62,15 +58,18 @@ public class DamController {
     @GetMapping(value = {Routes.Get_damdari_dams})
     public ResponseEntity<Object> findDamsOfDamdari(
             @PathVariable(required = false) String damdariId,
-            @RequestParam(required = false) String isFahli,
-            @RequestParam(required = false) String hasLangesh,
+            @RequestParam(required = false) String[] flag,
             @RequestParam(required = false) String typeId,
             @RequestParam(required = false, defaultValue = "id") String sort,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "20") int perPage,
             HttpServletResponse response) {
         try {
-            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId, isFahli, hasLangesh, typeId);
+            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId,  flag, typeId);
+
+            for(Dam dam : damList){
+                dam.setLastDamStatus(this.damService.findLastDamStatus(dam.getId().toString()));
+            }
             return ResponseEntity.ok()
                     .body(damList);
         } catch (Exception e) {
@@ -120,16 +119,23 @@ public class DamController {
         return damService.findAll(sort, page, perPage, spec);
     }
 
+    @GetMapping(value = {Routes.Get_flags})
+    public List<Flag> getflags() {
+        return damService.findAllFlags();
+    }
+
     @GetMapping(value = {Routes.Get_dam})
     public ResponseEntity<Object> findDam(
             @PathVariable String damId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
             @RequestParam(required = false, defaultValue = "id") String sort,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int perPage,
             HttpServletResponse response) {
         try {
-            Dam dam = this.damService.findDam(damId).get();
-            dam.setLastDamStatus(this.damService.findLastDamStatus(damId));
+            Dam dam = this.damService.findDam(damId,  fromDate,toDate);
+
             return ResponseEntity.ok()
                     .body(dam);
         } catch (Exception e) {

@@ -29,14 +29,40 @@ public class DamStatus implements Serializable {
     private Long gYROY;
     private Long gYROZ;
 
+    private Long gastricMomentum;
 
-    @Column(precision=8, scale=2)
+/*"time":"2024-02-21T11:40:50.383683Z",
+"timestamp":2340976348,
+"rssi":-99,
+"channel_rssi":-99,
+"snr":12.8,
+"frequency_offset":"1511",
+"uplink_token":"CiIKIAoUZXVpLTI0ZTEyNGZmZmVmM2Q0ZGISCCThJP/+89TbENztodwIGgwIwsLXrgYQ6v3f5gEg4JbB6JDBAQ==",
+"channel_index":3,
+"received_at":"2024-02-21T11:40:50.427390021Z"*/
+
+    private String time;
+    private Long timestamp;
+    private Long rssi;
+    private Long channelRssi;
+    @Column(precision = 8, scale = 2)
+    private Float snr;
+    private String frequencyOffset;
+    private Long channelIndex;
+    private String receivedAt;
+
+    private String gatewayId;
+    private String    eui;
+
+
+
+    @Column(precision = 8, scale = 2)
     private Float pH;
     private Long activeId;
     private Long settingConf;
     private String datetime;
 
-    @Column(precision=8, scale=2)
+    @Column(precision = 8, scale = 2)
     private Float temperature;
 
     @Lob
@@ -45,13 +71,13 @@ public class DamStatus implements Serializable {
 
 
     @Column(name = "created_at", updatable = false)
-    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @JsonIgnore
     @Column(name = "updated_at")
-   // @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
+    // @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 

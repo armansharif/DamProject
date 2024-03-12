@@ -2,6 +2,7 @@ package com.dam.modules.ticketing.controller;
 
 import com.dam.commons.Routes;
 import com.dam.modules.ticketing.model.Ticket;
+import com.dam.modules.ticketing.model.TicketCategory;
 import com.dam.modules.ticketing.service.TicketService;
 import com.dam.modules.user.model.Users;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,4 +62,9 @@ public class TicketController {
     public Ticket getTicketById(HttpServletRequest request, @PathVariable Long id) {
         return ticketService.findTicketById(id);
     }
+    @GetMapping(value = {Routes.GET_tickets_category})
+    public List<TicketCategory> getCategoryOfTicket(HttpServletRequest request) {
+        return ticketService.findAllCategory();
+    }
+
 }

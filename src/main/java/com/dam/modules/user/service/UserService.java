@@ -101,7 +101,6 @@ public class UserService implements UserDetailsService {
                 return resJson.toString();
             }
             if (user != null) {
-                //  response = smsVerification.sendSmsVerificationGhasedak(mobile, smsCode);
                 response = smsVerification.sendSmsVerificationSMSIR(mobile, smsCode);
             }
         } catch (IOException e) {

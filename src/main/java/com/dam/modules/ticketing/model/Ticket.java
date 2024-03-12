@@ -40,7 +40,7 @@ public class Ticket {
 
     private String title;
 
-    @JsonBackReference
+    @JsonManagedReference
     @ManyToOne
     TicketCategory ticketCategory;
 

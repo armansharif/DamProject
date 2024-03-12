@@ -27,6 +27,9 @@ public static final String FLAG_OF_ANIMAL_GOSHTI= "8";
     //  مصرف آب
     public static final String TYPE_OF_RESOURCE_WATER= "2";
 
+    public static final Long MAX_NORMAL_MOBILITY=38l;
+
+    public static final Long MIN_NORMAL_MOBILITY=33l;
 
 
 

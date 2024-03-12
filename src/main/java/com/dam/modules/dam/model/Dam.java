@@ -61,23 +61,16 @@ public class Dam implements Serializable {
     private List<DamStatus> damStatus;
     private int avgOfMilk=0;
 
-    private int isFahli=0;
-    private int isShiri=0;
-    private int isBardar=0;
-
-    private int hasLangesh=0;
-    private int hasTab=0;
-
-    private int needCare=0;
-
-
-
-    @JsonManagedReference
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY,
+            cascade = {
+                    CascadeType.PERSIST,
+                    CascadeType.MERGE
+            })
     @JoinTable(name = "dam_flag",
             joinColumns = { @JoinColumn(name = "dam_id") },
             inverseJoinColumns = { @JoinColumn(name = "flag_id") })
-    private Set<Flag> flags = new HashSet<>();
+    @JsonManagedReference
+    private Set<Flag> flag = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
@@ -108,4 +101,17 @@ public class Dam implements Serializable {
     @Transient
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private DamStatus lastDamStatus;
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Mobility lastMobility;
+
+
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<DynamicCharts> charts;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL )
+    private List<Mobility> mobility;
 }

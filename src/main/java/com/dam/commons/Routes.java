@@ -12,6 +12,8 @@ public class Routes {
     public final static String GET_tickets_add = ROOT + "/tickets/add";
     public final static String GET_tickets_close = ROOT + "/tickets/close/{id}";
     public final static String GET_tickets_response = ROOT + "/tickets/response/{id}";
+
+    public final static String GET_tickets_category= ROOT + "/tickets/category";
     public final static String GET_notifications = ROOT + "/notifications";
     public final static String POST_notification_read = ROOT + "/notification/read/{id}";
     public final static String Get_home_services = ROOT + "/home/services";
@@ -41,6 +43,8 @@ public class Routes {
     public final static String POST_login = ROOT + "/login";
     public final static String POST_admin_login = ROOT + "/admin/login";
     public final static String POST_admin_users = ROOT + "/admin/users";
+
+    public final static String Get_flags = ROOT + "/flag";
 
     public final static String Get_damdari_dams = ROOT + "/damdari/{damdariId}";
     public final static String Get_damdari = ROOT + "/damdari";

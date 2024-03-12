@@ -10,4 +10,6 @@ public class DynamicCharts {
     private String chartTitle;
     private List<ChartDto> data;
     private int position;
+    private String type;
+    private String chartName;
 }

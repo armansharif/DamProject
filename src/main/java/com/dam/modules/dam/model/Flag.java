@@ -3,6 +3,7 @@ package com.dam.modules.dam.model;
 import com.dam.modules.user.model.Users;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 
@@ -22,7 +23,4 @@ public class Flag {
 
     private String farsiName;
 
-    @JsonBackReference
-    @ManyToMany
-    private Set<Dam> dams= new HashSet<>();
 }

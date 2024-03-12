@@ -123,18 +123,16 @@ public class SmsVerification {
         return resJson.toString();
     }
 
-    public String sendSmsVerificationSMSIR(String mobile, String vcode) throws IOException {
+    public String sendSmsVerificationSMSIrUltraFast(String mobile, String vcode) throws IOException {
 
         String token = this.getToken();
         mobile = mobileNumberCorrection(mobile);
-
-
         String jsonParameterSTR = "{"
                 + " \"ParameterArray\":["
-                + "{ \"Parameter\": \"VerificationCode\",\"ParameterValue\": \"" + vcode + "\"}"
+                + "{ \"Parameter\": \"verification\",\"ParameterValue\": \"" + vcode + "\"}"
                 + "],"
                 + "\"Mobile\":\"" + mobile + "\","
-                + "\"TemplateId\":\"21827\""
+                + "\"TemplateId\":\"478522\""
                 + "}";
         String url = "http://RestfulSms.com/api/UltraFastSend";
         URL obj = new URL(url);
@@ -151,13 +149,9 @@ public class SmsVerification {
         os.flush();
         os.close();
         // For POST only - END
-
         int responseCode = con.getResponseCode();
         JSONObject resJson = new JSONObject();
-
         if (responseCode == HttpURLConnection.HTTP_CREATED) { //success
-
-
             BufferedReader in = new BufferedReader(new InputStreamReader(
                     con.getInputStream()));
             String inputLine;
@@ -169,23 +163,16 @@ public class SmsVerification {
             // print result
             System.out.println(responseStr.toString());
             JSONObject res = new JSONObject(responseStr.toString());
-
-
             boolean IsSuccessful = res.getBoolean("IsSuccessful");
-
             if (IsSuccessful) {
                 resJson.put("code", 200);
                 resJson.put("status", "success");
                 resJson.put("message", "Verification code sent successfully.");
-
             } else {
                 resJson.put("code", 401);
                 resJson.put("status", "fail");
                 resJson.put("message", "Unfortunately, there is a problem");
-
             }
-
-
         } else {
             resJson.put("code", 401);
             resJson.put("status", "fail");
@@ -196,6 +183,86 @@ public class SmsVerification {
         return resJson.toString();
     }
 
+    public String sendSmsVerificationSMSIR(String mobile, String vcode) throws IOException {
+
+     //   String token = this.getToken();
+        mobile = mobileNumberCorrection(mobile);
+
+        String jsonParameterSTR = "{\n" +
+                "  \"mobile\": \""+mobile+"\",\n" +
+                "  \"templateId\": \"478522\",\n" +
+                "  \"parameters\": [\n" +
+                "    {\n" +
+                "      \"name\": \"verification\",\n" +
+                "      \"value\": \" "+vcode+"\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        String url = "https://api.sms.ir/v1/send/verify";
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod("POST");
+     //   con.setRequestProperty("User-Agent", USER_AGENT);
+        con.setRequestProperty("Content-Type", "application/json");
+        con.setRequestProperty("Accept", "application/json");
+        con.setRequestProperty("x-api-key", "JHEeqfWx8QvHwvopgpmIZnqnusWH5vu7XOnDKB3C7qjLSmADwVcogoyksDfQNReU");
+
+        // For POST only - START
+        con.setDoOutput(true);
+        OutputStream os = con.getOutputStream();
+        System.out.println(jsonParameterSTR.getBytes());
+        os.write(jsonParameterSTR.getBytes());
+        os.flush();
+        os.close();
+        // For POST only - END
+
+        int responseCode = con.getResponseCode();
+        JSONObject resJson = new JSONObject();
+
+        if (responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK) { //success
+            BufferedReader in = new BufferedReader(new InputStreamReader(
+                    con.getInputStream()));
+            String inputLine;
+            StringBuffer responseStr = new StringBuffer();
+            while ((inputLine = in.readLine()) != null) {
+                responseStr.append(inputLine);
+            }
+            in.close();
+            // print result
+            System.out.println(responseStr.toString());
+            JSONObject res = new JSONObject(responseStr.toString());
+            boolean IsSuccessful = res.getInt("status")==1;
+            if (IsSuccessful) {
+                resJson.put("code", 200);
+                resJson.put("status", "success");
+                resJson.put("message", "Verification code sent successfully.");
+            } else {
+                resJson.put("code", 401);
+                resJson.put("status", "fail");
+                resJson.put("message", "Unfortunately, there is a problem");
+            }
+        } else {
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream(), "UTF-8"));
+            String inputLine;
+            StringBuffer responseStr = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                responseStr.append(inputLine);
+            }
+            in.close();
+
+            // print result
+            System.out.println(responseStr.toString());
+            JSONObject res = new JSONObject(responseStr.toString());
+
+
+            resJson.put("code", 401);
+            resJson.put("status", "fail");
+            resJson.put("message", "Unfortunately, there is a problem");
+        }
+        return resJson.toString();
+    }
     public int generateCode() {
         Random r = new Random(System.currentTimeMillis());
         return ((1 + r.nextInt(2)) * 10000 + r.nextInt(10000));

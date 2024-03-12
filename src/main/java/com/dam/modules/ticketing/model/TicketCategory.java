@@ -33,7 +33,7 @@ public class TicketCategory {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    @JsonManagedReference
+    @JsonBackReference
     @OneToMany(mappedBy = "ticketCategory", cascade = CascadeType.ALL)
     private List<Ticket> ticketList;
 

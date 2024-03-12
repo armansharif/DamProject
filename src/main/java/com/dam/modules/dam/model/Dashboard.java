@@ -1,12 +1,8 @@
 package com.dam.modules.dam.model;
 
-import com.dam.commons.Consts;
-import com.dam.modules.dam.repository.ChartDto;
 import lombok.Data;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Data
 public class Dashboard {
@@ -23,5 +19,7 @@ public class Dashboard {
 //    private Long avgOfMilk;
  //   private Map<String, List<ChartDto>> charts;
     private List<DynamicInfos> infos;
-    private Map<String, DynamicCharts> charts;
+ //   private Map<String, DynamicCharts> charts;
+
+    private List<DynamicCharts> charts;
 }

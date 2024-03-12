@@ -1,6 +1,6 @@
 package com.dam.modules.ticketing.service;
 
- import com.dam.modules.ticketing.consts.ConstTicketing;
+import com.dam.modules.ticketing.consts.ConstTicketing;
 import com.dam.modules.ticketing.model.Ticket;
 import com.dam.modules.ticketing.model.TicketCategory;
 import com.dam.modules.ticketing.model.TicketResponse;
@@ -68,7 +68,7 @@ public class TicketService {
 
     public Ticket addTicket(HttpServletRequest request, Long categoryId, String title, String content) {
         Users user = userService.getUserByToken(request);
-        TicketCategory category = ticketCategoryRepository.findById(categoryId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket.category.notFound"));
+        TicketCategory category = ticketCategoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ticket.category.notFound"));
 
         Ticket ticket = new Ticket();
         ticket.setStatus(ConstTicketing.TICKET_STATUS_OPEN);
@@ -83,16 +83,16 @@ public class TicketService {
     public Ticket closeTicket(HttpServletRequest request, Long ticketId) {
         Users user = userService.getUserByToken(request);
         //check user owner of ticket or admin
-        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket.notFound"));
+        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ticket.notFound"));
         ticket.setStatus(ConstTicketing.TICKET_STATUS_CLOSED);
         return ticketRepository.save(ticket);
     }
 
     public Ticket addResponseTicket(HttpServletRequest request, Long ticketId, String responseText) {
-        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket.notFound"));
+        Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ticket.notFound"));
 
         if (ticket.getStatus() == ConstTicketing.TICKET_STATUS_CLOSED) {
-             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"ticket.closed");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ticket.closed");
         }
         // check user is admin Or user is ownerOf ticket
 
@@ -111,8 +111,10 @@ public class TicketService {
         ticketResponse.setText(responseText);
         ticketResponse.setUsers(user);
         ticketResponseRepository.saveAndFlush(ticketResponse);
-        return ticketRepository.findById(ticketId).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket.notFound"));
+        return ticketRepository.findById(ticketId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ticket.notFound"));
     }
 
-
+    public List<TicketCategory> findAllCategory() {
+        return ticketCategoryRepository.findAll();
+    }
 }

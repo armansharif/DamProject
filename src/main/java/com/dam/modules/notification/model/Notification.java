@@ -26,6 +26,9 @@ public class Notification {
     private int isRead;
 
     private int readOnly;
+    private int priority;
+
+    private int damId;
 
     @JsonIgnore
     @Column(name = "created_at", updatable = false)
@@ -100,5 +103,19 @@ public class Notification {
         this.readOnly = readOnly;
     }
 
+    public int getPriority() {
+        return priority;
+    }
 
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
+    public int getDamId() {
+        return damId;
+    }
+
+    public void setDamId(int damId) {
+        this.damId = damId;
+    }
 }
