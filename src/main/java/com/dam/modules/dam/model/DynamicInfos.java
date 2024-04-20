@@ -11,4 +11,5 @@ public class DynamicInfos {
     private String data;
     private String icon;
     private int position;
+    private List<Integer> flags;
 }

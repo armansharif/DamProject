@@ -1,11 +1,16 @@
 package com.dam.modules.dam.service;
 
 import com.dam.commons.Consts;
+import com.dam.commons.Routes;
 import com.dam.commons.utils.BaseDateUtils;
 import com.dam.modules.dam.model.*;
 import com.dam.modules.dam.repository.*;
 
+import com.dam.modules.notification.repository.NotificationRepository;
+import com.dam.modules.notification.service.NotificationService;
 import com.dam.modules.ticketing.repository.TicketRepository;
+import com.dam.modules.user.model.Users;
+import liquibase.pro.packaged.t;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -50,8 +56,14 @@ public class DamService {
 
     private MobilityRepository mobilityRepository;
 
+    private DamParamRepository damParamRepository;
+
+    private NotificationService notificationService;
+
+    private ImpDateRepository impDateRepository;
+
     @Autowired
-    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository) {
+    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository, DamParamRepository damParamRepository, NotificationRepository notificationRepository, NotificationService notificationService, ImpDateRepository impDateRepository) {
         this.damRepository = damRepository;
         this.ticketRepository = ticketRepository;
         this.sampleDataRepository = sampleDataRepository;
@@ -60,6 +72,9 @@ public class DamService {
         this.damStatusRepository = damStatusRepository;
         this.flagRepository = flagRepository;
         this.mobilityRepository = mobilityRepository;
+        this.damParamRepository = damParamRepository;
+        this.notificationService = notificationService;
+        this.impDateRepository = impDateRepository;
     }
 
     public List<Dam> findAllDam(String sort,
@@ -206,7 +221,7 @@ public class DamService {
 
             Dam dam = damRepository.findDamByDeviceId(device_id).orElse(null);
             if (dam == null) {
-                Damdari damdari = damdariRepository.findDamdariById(1L);
+                Damdari damdari = damdariRepository.findDamdariById(Consts.DEFAULT_DAMDARI);
                 dam = new Dam();
                 dam.setDeviceId(device_id);
                 dam.setDamdari(damdari);
@@ -248,8 +263,46 @@ public class DamService {
             damStatusRepository.save(damStatus);
             insertMobility(dam);
 
+            List<DamParam> damParams = damParamRepository.findDamParamByDamdari(dam.getDamdari());
+
+//            1,دما
+//            2,PH
+//            3,فعالیت
+
+
+            Float maxTemp = damParams.get(0).getMax();
+            Float minTemp = damParams.get(0).getMin();
+            Damdari damdari = dam.getDamdari();
+            Set<Users> users = damdari.getUsers();
+            if (temperature > maxTemp) {
+                try {
+                    Flag flagOfTab = flagRepository.getById(Long.parseLong(Consts.FLAG_OF_ANIMAL_TAB));
+                    Set<Flag> flagSet = dam.getFlag();
+                    flagSet.add(flagOfTab);
+                    dam.setFlag(flagSet);
+                    damRepository.save(dam);
+                } catch (Exception e) {
+                }
+
+                for (Users user : users) {
+                    String message = "دمای بدن دام  " + dam.getId() + " - " + dam.getName() + " بیشتر از حد مجاز است (تب داشتن)";
+                    notificationService.saveNotification(message, "", 1, "رد کردن",
+                            Routes.PUT_dam_flag.replace("{damId}", dam.getId().toString()).replace("{flagId}", Consts.FLAG_OF_ANIMAL_TAB + ""),
+                            user, 0, 0, dam.getId(), 2
+                    );
+                }
+
+            }
+//            else if (temperature < minTemp) {
+//                for (Users user : users) {
+//                    String message = "دمای بدن دام  " + dam.getId() + " - " + dam.getName() + " کمتر از حد مجاز است (آب خوردن)";
+//                    notificationService.saveNotification(message, "", 0, "", "", user, 0, 0, dam.getId(), 2
+//                    );
+//                }
+//            }
+
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messageSource.getMessage("data.invalid", null, null));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "data.invalid");
         }
     }
 
@@ -262,6 +315,51 @@ public class DamService {
     public void deleteDam(Long id) throws Exception {
         this.damRepository.deleteById(id);
     }
+
+    public Dam editDam(String id, String name,
+                       String microChipCode,
+                       String baharBand,
+                       String label) {
+        Dam dam = damRepository.findDam(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "dam.notFound"));
+
+        if (name != null) {
+            dam.setName(name);
+        }
+        if (microChipCode != null) {
+            dam.setMicroChipCode(microChipCode);
+        }
+        if (baharBand != null) {
+            dam.setBaharBand(baharBand);
+        }
+        if (label != null) {
+            dam.setLable(label);
+        }
+        damRepository.save(dam);
+
+        return dam;
+    }
+
+    public Dam updateFlag(Long damId, Long flagId, Long value) {
+        Dam dam = damRepository.findDam(damId + "").orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messageSource.getMessage("dam.notFound", null, null)));
+        if (value == 0) {
+            Flag flag = flagRepository.findById(flagId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messageSource.getMessage("flag.notFound", null, null)));
+            Set<Flag> flags = dam.getFlag();
+            if (!flags.stream().filter(f -> f.getId() == flagId).collect(Collectors.toList()).isEmpty()) {
+                try {
+                    flags.remove(flag);
+                    dam.setFlag(flags);
+                    damRepository.save(dam);
+                } catch (Exception e) {
+                    throw new ResponseStatusException(HttpStatus.NOT_FOUND, "data.invalid");
+                }
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "flag.notFound");
+            }
+        }
+        return dam;
+
+    }
+
 
     public List<Dam> findAll(String sort,
                              int page,
@@ -348,6 +446,7 @@ public class DamService {
             dynamicInfos.setTitle("دامداری");
             dynamicInfos.setIcon("../icon/damdari.png");
             dynamicInfos.setData(damRepository.countOfDamdari(null).toString());
+            dynamicInfos.setFlags(Arrays.asList());
             infos.add(dynamicInfos);
         }
 
@@ -356,6 +455,7 @@ public class DamService {
         dynamicInfos.setPosition(1);
         dynamicInfos.setTitle("کل");
         dynamicInfos.setIcon("../icon/total.png");
+        dynamicInfos.setFlags(Arrays.asList());
         dynamicInfos.setData(damRepository.countOfDam(damdariId).toString());
         infos.add(dynamicInfos);
 
@@ -364,6 +464,7 @@ public class DamService {
         dynamicInfos.setPosition(2);
         dynamicInfos.setTitle("حامله");
         dynamicInfos.setIcon("../icon/pregnant.png");
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_BARDAR)));//
         dynamicInfos.setData(damRepository.countOf(damdariId, Arrays.asList(Consts.FLAG_OF_ANIMAL_BARDAR)).toString());
         infos.add(dynamicInfos);
 
@@ -371,6 +472,7 @@ public class DamService {
         dynamicInfos.setPosition(3);
         dynamicInfos.setTitle("نیازمند مراقبت");
         dynamicInfos.setIcon("../icon/care.png");
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_TAB), Integer.parseInt(Consts.FLAG_OF_ANIMAL_ASTANEH_ZAYEMAN), Integer.parseInt(Consts.FLAG_OF_ANIMAL_BIMAR)));//
         dynamicInfos.setData(damRepository.countOf(damdariId, bimarFlags).toString());
         infos.add(dynamicInfos);
 
@@ -378,6 +480,8 @@ public class DamService {
         dynamicInfos.setPosition(4);
         dynamicInfos.setTitle("فحلی");
         dynamicInfos.setIcon("../icon/fahli.png");
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_FAHLI)));//
+
         dynamicInfos.setData(damRepository.countOf(damdariId, Arrays.asList(Consts.FLAG_OF_ANIMAL_FAHLI)).toString());
         infos.add(dynamicInfos);
 
@@ -386,6 +490,7 @@ public class DamService {
         dynamicInfos.setTitle("شیری");
         dynamicInfos.setIcon("../icon/milking.png");
         dynamicInfos.setData(damRepository.countOf(damdariId, Arrays.asList(Consts.FLAG_OF_ANIMAL_SHIRI)).toString());
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_SHIRI)));//
         infos.add(dynamicInfos);
 
         dynamicInfos = new DynamicInfos();
@@ -393,6 +498,7 @@ public class DamService {
         dynamicInfos.setTitle("آستانه زایمان");
         dynamicInfos.setIcon("../icon/birth.png");
         dynamicInfos.setData(damRepository.countOf(damdariId, Arrays.asList(Consts.FLAG_OF_ANIMAL_ASTANEH_ZAYEMAN)).toString());
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_ASTANEH_ZAYEMAN)));//
         infos.add(dynamicInfos);
 
         dashboard.setInfos(infos);
@@ -429,10 +535,23 @@ public class DamService {
         dynamicCharts.setData(damRepository.amountOfMilkingChartDto(damdariId, fromDate, toDate));
         chartList.add(dynamicCharts);
 
+        Damdari damdari = damdariRepository.findDamdariById(Long.parseLong(damdariId));
+        List<DamParam> damParams = damParamRepository.findDamParamByDamdari(damdari);
+
+//             ,دما
+//             ,PH
+//             ,فعالیت
+
+        Float maxTemp = damParams.get(0).getMax();
+        Float minTemp = damParams.get(0).getMin();
+        Float maxPh = damParams.get(1).getMax();
+        Float minPh = damParams.get(1).getMin();
 
         //chart no 3
         dynamicCharts = new DynamicCharts();
         dynamicCharts.setPosition(4);
+        dynamicCharts.setLimitMin(minPh);
+        dynamicCharts.setLimitMax(maxPh);
         dynamicCharts.setChartTitle("میانگین PH");
         dynamicCharts.setType("linear");
         dynamicCharts.setChartName("averageOfPH");
@@ -443,6 +562,8 @@ public class DamService {
         //chart no 3
         dynamicCharts = new DynamicCharts();
         dynamicCharts.setPosition(5);
+        dynamicCharts.setLimitMin(minTemp);
+        dynamicCharts.setLimitMax(maxTemp);
         dynamicCharts.setChartTitle("میانگین دما");
         dynamicCharts.setType("linear");
         dynamicCharts.setChartName("averageOfTemp");
@@ -522,6 +643,44 @@ public class DamService {
         return damStatusRepository.findAllDamStatus(damId, sortedAndPagination);
     }
 
+    public List<ImpDate> findAllImpDate(Long damId, String sort,
+                                        int page,
+                                        int perPage) {
+        Pageable sortedAndPagination =
+                PageRequest.of(page, perPage, Sort.by(sort).ascending());
+        Dam dam = damRepository.findDam(damId + "").orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "dam.notFound"));
+
+        return impDateRepository.findAllByDam(dam, sortedAndPagination);
+    }
+
+    public List<DamStatus> findAllDamStatusByDate(String sort,
+                                                  int page,
+                                                  int perPage,
+                                                  String damId,
+                                                  String fromDate,
+                                                  String toDate,
+                                                  int sortType) {
+        Pageable sortedAndPagination = null;
+        if (sortType == 1)
+            sortedAndPagination = PageRequest.of(page, perPage, Sort.by(sort).ascending());
+        else
+            sortedAndPagination = PageRequest.of(page, perPage, Sort.by(sort).descending());
+        return damStatusRepository.findAllDamStatus(damId, fromDate, toDate, sortedAndPagination);
+    }
+
+    public ImpDate saveImpDate(Long damId, Long typeId, String description, String src, String date) {
+        Dam dam = damRepository.findDam(damId + "").orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "dam.notFound"));
+
+        ImpDate impDate = new ImpDate();
+        impDate.setDam(dam);
+        impDate.setDate(date);
+        impDate.setTypeId(typeId);
+        impDate.setDescription(description);
+        impDate.setSrc(src);
+
+        return impDateRepository.save(impDate);
+    }
+
     public DamStatus findLastDamStatus(
             String damId) {
         return damStatusRepository.findLastDamStatus(damId);
@@ -529,7 +688,7 @@ public class DamService {
 
     public Mobility findLastMobility(String damId) {
         return mobilityRepository.findLastMobility(damId);
-     }
+    }
 
     public List<DamStatus> findAllDamGps(String sort,
                                          int page,

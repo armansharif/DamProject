@@ -23,6 +23,9 @@ public class Notification {
 
     private String route;
 
+    private String actionRoute;
+    private String actionTitle;
+    private int hasAction=0;
     private int isRead;
 
     private int readOnly;
@@ -117,5 +120,29 @@ public class Notification {
 
     public void setDamId(int damId) {
         this.damId = damId;
+    }
+
+    public String getActionRoute() {
+        return actionRoute;
+    }
+
+    public void setActionRoute(String actionRoute) {
+        this.actionRoute = actionRoute;
+    }
+
+    public int getHasAction() {
+        return hasAction;
+    }
+
+    public void setHasAction(int hasAction) {
+        this.hasAction = hasAction;
+    }
+
+    public String getActionTitle() {
+        return actionTitle;
+    }
+
+    public void setActionTitle(String actionTitle) {
+        this.actionTitle = actionTitle;
     }
 }

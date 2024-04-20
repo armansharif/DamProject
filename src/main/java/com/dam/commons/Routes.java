@@ -53,8 +53,11 @@ public class Routes {
     public final static String Get_dams_hasProblem_damdariId = ROOT + "/damHasProblem/{damdariId}";
     public final static String Get_dams_hasProblem = ROOT + "/damHasProblem";
     public final static String Get_dam_status = ROOT + "/damStatus/{damId}";
+    public final static String Get_dam_status_csv = ROOT + "/damStatus/csv/{damId}";
     public final static String POST_dam_status = ROOT + "/damStatus/{damId}";
     public final static String POST_dam_add = ROOT + "/dam";
+
+    public final static String PUT_dam_flag = ROOT + "/dam/{damId}/flag/{flagId}";
     public final static String DELETE_dam_delete = ROOT + "/dam/{id}";
 
     public final static String PUT_dam_edit = ROOT + "/dam/{id}";
@@ -63,6 +66,8 @@ public class Routes {
     public final static String Get_dashboard_damdariId = ROOT + "/dashboard/{damdariId}";
 
     public final static String POST_data = ROOT + "/data";
+    public final static String POST_imp_date = ROOT + "/impDate/{damId}";
+    public final static String GET_imp_date = ROOT + "/impDate/{damId}";
 
     public final static String POST_damdari_param = ROOT + "/damdari/{damdariId}/param";
     public final static String GET_damdari_param = ROOT + "/damdari/{damdariId}/param";

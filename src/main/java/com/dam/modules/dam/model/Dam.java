@@ -76,6 +76,10 @@ public class Dam implements Serializable {
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
     private List<Milking> milking;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
+    private List<ImpDate> impDate;
+
 
     @JsonManagedReference
     @ManyToOne
@@ -114,4 +118,9 @@ public class Dam implements Serializable {
     @JsonManagedReference
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL )
     private List<Mobility> mobility;
+
+    private String microChipCode;
+    private String lable;
+    private String baharBand;
+
 }

@@ -28,7 +28,7 @@ public class NotificationService {
         if (justUnread == 1)
             return notificationRepository.findAllByUsers(user).stream().filter(notification -> notification.getIsRead() == 0).collect(Collectors.toList());
         else
-            return notificationRepository.findAllByUsers(user) ;
+            return notificationRepository.findAllByUsers(user);
     }
 
     public Optional<Notification> findNotification(Long id) {
@@ -39,5 +39,29 @@ public class NotificationService {
         notification.setIsRead(1);
         notificationRepository.save(notification);
         return notification;
+    }
+
+    public Notification saveNotification(String message,
+                                         String route,
+                                         int hasAction,
+                                         String actionTitle,
+                                         String actionRoute,
+                                         Users user ,
+                                         int isRead,
+                                         int readOnly,
+                                         Long dam_id,
+                                         int priority) {
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setHasAction(hasAction);
+        notification.setActionTitle(actionTitle);
+        notification.setActionRoute(actionRoute);
+        notification.setRoute(route);
+        notification.setUsers(user);
+        notification.setIsRead(isRead);
+        notification.setReadOnly(readOnly);
+        notification.setDamId(dam_id.intValue());
+        notification.setPriority(priority);
+        return notificationRepository.save(notification);
     }
 }

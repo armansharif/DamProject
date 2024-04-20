@@ -5,9 +5,11 @@ import com.dam.modules.dam.model.Dam;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -247,5 +249,19 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
     List<Dam> findDamsByFlagIn(List list);
 
     Long countDamsByFlagIn(List list);
+
+
+//    @Modifying
+//    @Transactional
+//    @Query(nativeQuery = true, value = " delete from dam_flag where flag_id=:flagId and dam_id = :damId " )
+//    void unsetFlag(@Param("damId") Long damId,@Param("flagId") Long flagId);
+//
+
+
+
+    @Query(nativeQuery = true, value = "select id from dam_flag where flag_id=:flagId and dam_id = :damId ")
+    List<Dam> findDamsByFlag(@Param("damId") Long damId, @Param("flag") Long flag );
+
+
 
 }

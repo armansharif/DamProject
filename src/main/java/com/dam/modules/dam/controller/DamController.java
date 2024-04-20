@@ -19,7 +19,9 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
@@ -65,9 +68,9 @@ public class DamController {
             @RequestParam(required = false, defaultValue = "20") int perPage,
             HttpServletResponse response) {
         try {
-            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId,  flag, typeId);
+            List<Dam> damList = this.damService.findAllDamsOfDamdari(sort, page, perPage, damdariId, flag, typeId);
 
-            for(Dam dam : damList){
+            for (Dam dam : damList) {
                 dam.setLastDamStatus(this.damService.findLastDamStatus(dam.getId().toString()));
             }
             return ResponseEntity.ok()
@@ -119,6 +122,16 @@ public class DamController {
         return damService.findAll(sort, page, perPage, spec);
     }
 
+    @GetMapping(value = {Routes.GET_imp_date})
+    public List<ImpDate> getAllImpDates(
+            @PathVariable Long damId,
+            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int perPage,
+            HttpServletResponse response) {
+        return damService.findAllImpDate(damId, sort, page, perPage);
+    }
+
     @GetMapping(value = {Routes.Get_flags})
     public List<Flag> getflags() {
         return damService.findAllFlags();
@@ -134,7 +147,7 @@ public class DamController {
             @RequestParam(required = false, defaultValue = "10") int perPage,
             HttpServletResponse response) {
         try {
-            Dam dam = this.damService.findDam(damId,  fromDate,toDate);
+            Dam dam = this.damService.findDam(damId, fromDate, toDate);
 
             return ResponseEntity.ok()
                     .body(dam);
@@ -155,9 +168,78 @@ public class DamController {
             @RequestParam(required = false, defaultValue = "10") int perPage,
             HttpServletResponse response) {
         try {
-            List<DamStatus> damStatusList = this.damService.findAllDamStatus(sort, page, perPage, damId,sortType);
+            List<DamStatus> damStatusList = this.damService.findAllDamStatus(sort, page, perPage, damId, sortType);
             return ResponseEntity.ok()
                     .body(damStatusList);
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GetMapping(value = {Routes.Get_dam_status_csv})
+    public ResponseEntity<Object> findDamStatusCsv(
+            @PathVariable String damId,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "0") int sortType,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int perPage,
+            HttpServletResponse response) {
+        try {
+            List<DamStatus> damStatusList = this.damService.findAllDamStatusByDate(sort, page, perPage, damId, fromDate, toDate, sortType);
+
+            final String CSV_HEADER = "id,accx,accy,accz,active_id,battery,channel_index,channel_rssi,created_at,datetime," +
+                    "description,eui,frequency_offset,gps,gyrox,gyroy,gyroz,gastric_momentum,gateway_id,ph,received_at,rssi,snr,temperature,time,timestamp,updated_at,dam_id\n";
+
+            StringBuilder csvContent = new StringBuilder();
+            csvContent.append(CSV_HEADER);
+
+            for (DamStatus damStatus : damStatusList) {
+                csvContent.append(damStatus.getId()).append(",")
+                        .append(damStatus.getACCX()).append(",")
+                        .append(damStatus.getACCY()).append(",")
+                        .append(damStatus.getACCZ()).append(",")
+                        .append(damStatus.getActiveId()).append(",")
+                        .append(damStatus.getBattery()).append(",")
+                        .append(damStatus.getChannelIndex()).append(",")
+                        .append(damStatus.getChannelRssi()).append(",")
+                        .append(damStatus.getCreatedAt()).append(",")
+                        .append(damStatus.getDatetime()).append(",")
+                        .append(damStatus.getDescription()).append(",")
+                        .append(damStatus.getEui()).append(",")
+                        .append(damStatus.getFrequencyOffset()).append(",")
+                        .append(damStatus.getGPS()).append(",")
+                        .append(damStatus.getGYROX()).append(",")
+                        .append(damStatus.getGYROY()).append(",")
+                        .append(damStatus.getGYROZ()).append(",")
+                        .append(damStatus.getGastricMomentum()).append(",")
+                        .append(damStatus.getGatewayId()).append(",")
+                        .append(damStatus.getPH()).append(",")
+                        .append(damStatus.getReceivedAt()).append(",")
+                        .append(damStatus.getRssi()).append(",")
+                        .append(damStatus.getSnr()).append(",")
+                        .append(damStatus.getTemperature()).append(",")
+                        .append(damStatus.getTime()).append(",")
+                        .append(damStatus.getTimestamp()).append(",")
+                        .append(damStatus.getUpdatedAt()).append(",")
+                        .append(damStatus.getDam().getId()).append("\n")
+                ;
+            }
+
+
+            byte[] csvBytes = csvContent.toString().getBytes();
+            String fileName = new SimpleDateFormat("yyyyMMdd_HHmm").format(new Date());
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", "damStatus_" + damId + "_" + fileName + ".csv");
+
+            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
+
         } catch (Exception e) {
             return new ResponseEntity<>(
                     JsonResponseBodyTemplate.
@@ -213,7 +295,36 @@ public class DamController {
         }
     }
 
-    @PostMapping(value = {Routes.POST_dam_add})
+
+    @PutMapping(value = {Routes.PUT_dam_edit})
+    public ResponseEntity<Object> editDam(HttpServletResponse response, HttpServletRequest request,
+                                          @PathVariable(required = false) String id,
+                                          @RequestParam(required = false) String name,
+                                          @RequestParam(required = false) String microChipCode,
+                                          @RequestParam(required = false) String baharBand,
+                                          @RequestParam(required = false) String label) {
+
+
+        Dam dam = damService.editDam(id, name, microChipCode, baharBand, label);
+
+        return ResponseEntity.ok()
+                .body(dam);
+
+
+    }
+
+    @PutMapping(value = {Routes.PUT_dam_flag})
+    public ResponseEntity<Object> editFlagOfDam(HttpServletResponse response, HttpServletRequest request,
+                                                @PathVariable(required = false) Long damId,
+                                                @PathVariable(required = false) Long flagId,
+                                                @RequestParam(required = false) Long value) {
+            Dam dam = damService.updateFlag(damId, flagId,value);
+            return ResponseEntity.ok()
+                    .body(dam);
+
+    }
+
+
     public ResponseEntity<Object> addDam(String json, MultipartFile fileImage, HttpServletResponse response, HttpServletRequest request) {
         try {
 
@@ -253,8 +364,8 @@ public class DamController {
         }
     }
 
-    @RequestMapping(value = {Routes.POST_data}, method = { RequestMethod.GET, RequestMethod.POST })
-    public ResponseEntity<Object> getData(@RequestBody String body,@RequestParam(required = false) String data, HttpServletResponse response ) {
+    @RequestMapping(value = {Routes.POST_data}, method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<Object> getData(@RequestBody String body, @RequestParam(required = false) String data, HttpServletResponse response) {
         try {
 
             damService.addSampleData("DATA:" + data);
@@ -302,4 +413,26 @@ public class DamController {
 //
 //    }
 
+
+    @PostMapping(value = {Routes.POST_imp_date})
+    public ResponseEntity<Object> postImpDate(
+            @PathVariable(required = false) Long damId,
+            @RequestParam(required = false) Long typeId,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String src,
+            HttpServletResponse response) {
+        try {
+            damService.saveImpDate(damId, typeId, description, src, date);
+            return ResponseEntity.ok()
+                    .body(JsonResponseBodyTemplate
+                            .createResponseJson("success", response.getStatus(), "Data saved successfully").toString());
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
 }

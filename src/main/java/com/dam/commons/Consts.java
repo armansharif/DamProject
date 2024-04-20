@@ -3,7 +3,7 @@ package com.dam.commons;
 public class Consts {
 
 
-
+    public static final Long DEFAULT_DAMDARI =2L;
 //        "bardar"	"باردار"
 public static final String FLAG_OF_ANIMAL_BARDAR = "1";
 //        "fahli"	"فحلی"

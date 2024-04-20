@@ -12,4 +12,6 @@ public class DynamicCharts {
     private int position;
     private String type;
     private String chartName;
+    private Float limitMin;
+    private Float limitMax;
 }

@@ -24,4 +24,8 @@ public interface DamStatusRepository extends JpaRepository<DamStatus,Long> {
     @Query(nativeQuery = true, value = "select * from dam_status where  id = (select MAX(id) from dam_status where dam_id =:damId )")
      DamStatus   findLastDamStatus(@Param("damId") String damId );
 
+    @Query(nativeQuery = true, value = "select * from dam_status where dam_id =:damId   AND ( :fromDate is null or  pdate(created_at) >= :fromDate)     " +
+            " AND ( :toDate is null or  pdate(created_at) <= :toDate)  ")
+    List<DamStatus> findAllDamStatus(@Param("damId") String damId , @Param("fromDate") String fromDate, @Param("toDate") String toDate, Pageable pageable);
+
 }
