@@ -18,9 +18,8 @@ public class Milking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @JsonIgnore
@@ -33,7 +32,7 @@ public class Milking {
 
     @JsonIgnore
     @ManyToOne
-    private Dam dam;
+    private Damdari damdari;
 }
 
 

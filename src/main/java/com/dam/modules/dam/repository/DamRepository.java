@@ -86,7 +86,7 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
     Long countOfDamdari(@Param("userId") String userId);
 
     @Query(nativeQuery = true, value = "select AVG(liter)  ang from milking   WHERE 1=1  and  " +
-            " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     ")
+            " ( :damdariId is null or  damdari_id =:damdariId  )     ")
     Long avgOfMilk(@Param("damdariId") String damdariId);
 
     @Query(nativeQuery = true, value = "select AVG(ph)  avg from dam_status   WHERE 1=1  and  " +
@@ -135,7 +135,7 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
 
     @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title, SUM(liter) AS value " +
             "  from milking WHERE 1=1 and " +
-            " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     " +
+            " ( :damdariId is null or  damdari_id =:damdariId  )    " +
             fromDateToDateWhereCondition +
             "   GROUP BY pday(created_at),  " +
             "        PMONTH(created_at), " +

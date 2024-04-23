@@ -72,6 +72,7 @@ public class DamController {
 
             for (Dam dam : damList) {
                 dam.setLastDamStatus(this.damService.findLastDamStatus(dam.getId().toString()));
+                dam.setLastMobility(this.damService.findLastMobility(dam.getId().toString()));
             }
             return ResponseEntity.ok()
                     .body(damList);
@@ -435,4 +436,6 @@ public class DamController {
 
         }
     }
+
+
 }

@@ -64,4 +64,8 @@ public class Damdari {
     @JsonBackReference
     @OneToMany(mappedBy = "damdari", cascade = CascadeType.ALL)
     private List<DamParam> damParams;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "damdari", cascade = CascadeType.ALL)
+    private List<Milking> milking;
 }

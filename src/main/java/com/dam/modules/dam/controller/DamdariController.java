@@ -114,6 +114,43 @@ public ResponseEntity<Object> findDamdariParam(
         }
 
     }
+    @PostMapping(value = {Routes.POST_resource})
+    public ResponseEntity<Object> postResource(
+            @PathVariable(required = false) Long damdariId,
+            @RequestParam(required = false) Long typeId,
+            @RequestParam(required = false) Long amount,
+            @RequestParam(required = false) String date,
+            HttpServletResponse response) {
+        try {
+            damdariService.saveResource(damdariId, typeId, amount, date);
+            return ResponseEntity.ok()
+                    .body(JsonResponseBodyTemplate
+                            .createResponseJson("success", response.getStatus(), "Data saved successfully").toString());
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
 
+        }
+    }    @PostMapping(value = {Routes.POST_milking})
+    public ResponseEntity<Object> postMilking(
+            @PathVariable(required = false) Long damdariId,
+            @RequestParam(required = false) Double liter,
+            @RequestParam(required = false) String date,
+            HttpServletResponse response) {
+        try {
+            damdariService.saveMilking(damdariId,  liter, date);
+            return ResponseEntity.ok()
+                    .body(JsonResponseBodyTemplate
+                            .createResponseJson("success", response.getStatus(), "Data saved successfully").toString());
+        } catch (Exception e) {
+            return new ResponseEntity<>(
+                    JsonResponseBodyTemplate.
+                            createResponseJson("fail", HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()).toString(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
 
 }

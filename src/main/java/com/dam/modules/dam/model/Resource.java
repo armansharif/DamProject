@@ -19,7 +19,6 @@ public class Resource {
 
     @Column(name = "created_at", updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @JsonIgnore

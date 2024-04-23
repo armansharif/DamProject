@@ -2,7 +2,9 @@ package com.dam.modules.dam.service;
 
 import com.dam.commons.Consts;
 import com.dam.commons.Routes;
+import com.dam.commons.utils.BaseCommonUtils;
 import com.dam.commons.utils.BaseDateUtils;
+import com.dam.commons.utils.DateUtils;
 import com.dam.modules.dam.model.*;
 import com.dam.modules.dam.repository.*;
 
@@ -10,7 +12,6 @@ import com.dam.modules.notification.repository.NotificationRepository;
 import com.dam.modules.notification.service.NotificationService;
 import com.dam.modules.ticketing.repository.TicketRepository;
 import com.dam.modules.user.model.Users;
-import liquibase.pro.packaged.t;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -62,8 +66,10 @@ public class DamService {
 
     private ImpDateRepository impDateRepository;
 
+
+
     @Autowired
-    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository, DamParamRepository damParamRepository, NotificationRepository notificationRepository, NotificationService notificationService, ImpDateRepository impDateRepository) {
+    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository, DamParamRepository damParamRepository, NotificationRepository notificationRepository, NotificationService notificationService, ImpDateRepository impDateRepository, ResourceRepository resourceRepository) {
         this.damRepository = damRepository;
         this.ticketRepository = ticketRepository;
         this.sampleDataRepository = sampleDataRepository;
@@ -401,6 +407,17 @@ public class DamService {
     public Dashboard getDashboardData(String damdariId, String fromDate, String toDate) {
         Dashboard dashboard = new Dashboard();
 
+
+        String today = BaseDateUtils.getTodayJalali();
+        String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
+        if (BaseCommonUtils.isNull(fromDate) ){
+            fromDate=lastMonth.replace("/","-");
+        }
+        if (BaseCommonUtils.isNull(toDate) ){
+            toDate=today.replace("/","-");
+        }
+
+
         List<String> bimarFlags = new ArrayList<>();
         // bimarFlags.add(Consts.FLAG_OF_ANIMAL_BARDAR);
         bimarFlags.add(Consts.FLAG_OF_ANIMAL_TAB);
@@ -681,6 +698,7 @@ public class DamService {
         return impDateRepository.save(impDate);
     }
 
+
     public DamStatus findLastDamStatus(
             String damId) {
         return damStatusRepository.findLastDamStatus(damId);
@@ -704,6 +722,26 @@ public class DamService {
         dam.setLastDamStatus(findLastDamStatus(damId));
         dam.setLastMobility(findLastMobility(damId));
 
+        List<DamParam> damParams = damParamRepository.findDamParamByDamdari(dam.getDamdari());
+
+//            1,دما
+//            2,PH
+//            3,فعالیت
+        String today = BaseDateUtils.getTodayJalali();
+        String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
+        if (BaseCommonUtils.isNull(fromDate) ){
+            fromDate=lastMonth.replace("/","-");
+        }
+        if (BaseCommonUtils.isNull(toDate) ){
+            toDate=today.replace("/","-");
+        }
+
+        Float maxTemp = damParams.get(0).getMax();
+        Float minTemp = damParams.get(0).getMin();
+
+        Float maxPh= damParams.get(1).getMax();
+        Float minPh = damParams.get(1).getMin();
+
         List<DynamicCharts> chartList = new ArrayList<>();
         DynamicCharts dynamicCharts = new DynamicCharts();
         //chart no 1
@@ -711,6 +749,8 @@ public class DamService {
         dynamicCharts.setChartTitle("PH");
         dynamicCharts.setType("linear");
         dynamicCharts.setChartName("PH");
+        dynamicCharts.setLimitMax(maxPh);
+        dynamicCharts.setLimitMin(minPh);
         dynamicCharts.setData(damRepository.phOfDamChartDto(damId, fromDate, toDate));
         chartList.add(dynamicCharts);
 
@@ -720,6 +760,8 @@ public class DamService {
         dynamicCharts.setChartTitle("دما");
         dynamicCharts.setType("linear");
         dynamicCharts.setChartName("temp");
+        dynamicCharts.setLimitMax(maxTemp);
+        dynamicCharts.setLimitMin(minTemp);
         dynamicCharts.setData(damRepository.temperatureOfDamChartDto(damId, fromDate, toDate));
         chartList.add(dynamicCharts);
 

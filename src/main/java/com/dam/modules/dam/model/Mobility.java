@@ -2,6 +2,7 @@ package com.dam.modules.dam.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -19,7 +20,7 @@ public class Mobility {
 
     private float value;
 
-    @JsonBackReference
+    @JsonIgnore
     @ManyToOne
     private Dam dam;
 

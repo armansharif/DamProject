@@ -72,9 +72,6 @@ public class Dam implements Serializable {
     @JsonManagedReference
     private Set<Flag> flag = new HashSet<>();
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
-    private List<Milking> milking;
 
     @JsonIgnore
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL)
@@ -115,7 +112,7 @@ public class Dam implements Serializable {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<DynamicCharts> charts;
 
-    @JsonManagedReference
+    @JsonIgnore
     @OneToMany(mappedBy = "dam", cascade = CascadeType.ALL )
     private List<Mobility> mobility;
 

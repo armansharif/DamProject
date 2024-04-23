@@ -26,9 +26,9 @@ public class NotificationService {
 
     public List<Notification> getNotificationOfUser(Users user, int justUnread) {
         if (justUnread == 1)
-            return notificationRepository.findAllByUsers(user).stream().filter(notification -> notification.getIsRead() == 0).collect(Collectors.toList());
+            return notificationRepository.findAllByUsersOrderByIdDesc(user).stream().filter(notification -> notification.getIsRead() == 0).collect(Collectors.toList());
         else
-            return notificationRepository.findAllByUsers(user);
+            return notificationRepository.findAllByUsersOrderByIdDesc(user);
     }
 
     public Optional<Notification> findNotification(Long id) {

@@ -71,4 +71,7 @@ public class Routes {
 
     public final static String POST_damdari_param = ROOT + "/damdari/{damdariId}/param";
     public final static String GET_damdari_param = ROOT + "/damdari/{damdariId}/param";
+
+    public final static String POST_resource = ROOT + "/damdari/resource/{damdariId}";
+    public final static String POST_milking = ROOT + "/damdari/milking/{damdariId}";
 }
