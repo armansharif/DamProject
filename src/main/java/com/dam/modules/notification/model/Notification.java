@@ -1,5 +1,7 @@
 package com.dam.modules.notification.model;
 
+import com.dam.commons.utils.BaseDateUtils;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.dam.modules.user.model.Users;
 import org.hibernate.annotations.CreationTimestamp;
@@ -33,14 +35,19 @@ public class Notification {
 
     private int damId;
 
-    @JsonIgnore
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "created_at", updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
     @JsonIgnore
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Column(name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Transient
+    private String dateTime;
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -144,5 +151,13 @@ public class Notification {
 
     public void setActionTitle(String actionTitle) {
         this.actionTitle = actionTitle;
+    }
+
+    public String getDateTime() {
+        return BaseDateUtils.getJalaliDate(getCreatedAt().toLocalDate().toString()).replace("/","-")+" " + getCreatedAt().toLocalTime().toString();
+    }
+
+    public void setDateTime(String dateTime) {
+        this.dateTime = dateTime;
     }
 }

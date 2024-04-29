@@ -408,7 +408,7 @@ public class DamService {
         Dashboard dashboard = new Dashboard();
 
 
-        String today = BaseDateUtils.getTodayJalali();
+        String today = DateUtils.addDaysToJalaliDate( BaseDateUtils.getTodayJalali(), 1);
         String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
         if (BaseCommonUtils.isNull(fromDate) ){
             fromDate=lastMonth.replace("/","-");
