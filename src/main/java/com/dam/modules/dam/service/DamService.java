@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -66,10 +67,13 @@ public class DamService {
 
     private ImpDateRepository impDateRepository;
 
+    private HistoricalFlagRepository historicalFlagRepository;
+
+    private WaterDrinkRepository waterDrinkRepository;
 
 
     @Autowired
-    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository, DamParamRepository damParamRepository, NotificationRepository notificationRepository, NotificationService notificationService, ImpDateRepository impDateRepository, ResourceRepository resourceRepository) {
+    public DamService(DamRepository damRepository, TicketRepository ticketRepository, SampleDataRepository sampleDataRepository, DamdariService damdariService, DamdariRepository damdariRepository, MessageSource messageSource, DamStatusRepository damStatusRepository, FlagRepository flagRepository, MobilityRepository mobilityRepository, DamParamRepository damParamRepository, NotificationRepository notificationRepository, NotificationService notificationService, ImpDateRepository impDateRepository, ResourceRepository resourceRepository, HistoricalFlagRepository historicalFlagRepository, WaterDrinkRepository waterDrinkRepository) {
         this.damRepository = damRepository;
         this.ticketRepository = ticketRepository;
         this.sampleDataRepository = sampleDataRepository;
@@ -81,6 +85,8 @@ public class DamService {
         this.damParamRepository = damParamRepository;
         this.notificationService = notificationService;
         this.impDateRepository = impDateRepository;
+        this.historicalFlagRepository = historicalFlagRepository;
+        this.waterDrinkRepository = waterDrinkRepository;
     }
 
     public List<Dam> findAllDam(String sort,
@@ -94,6 +100,10 @@ public class DamService {
 
     public List<Flag> findAllFlags() {
         return flagRepository.findAll();
+    }
+
+    public List<HistoricalFlag> findAllHistoricalFlags(Long damId) {
+        return historicalFlagRepository.findAllByDam(damId);
     }
 
     @Transactional
@@ -266,6 +276,28 @@ public class DamService {
             if (damStatus.getGPS() == null && dam.getDamdari().getGPS() != null) {
                 damStatus.setGPS(dam.getDamdari().getGPS());
             }
+            DamStatus lastDamstatus = damStatusRepository.findLastDamStatus(dam.getId() + "");
+
+            if (BaseCommonUtils.isNotNull(temperature) && BaseCommonUtils.isNotNull(lastDamstatus.getTemperature())) {
+                boolean drankWater = (( temperature* 100) / lastDamstatus.getTemperature() ) < 96.5;
+                if (drankWater) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                    Date date = new Date();
+                    WaterDrink existWaterDrank = waterDrinkRepository.findWaterDrinkByDate(dateFormat.format(date), dam.getId());
+                    if (existWaterDrank != null) {
+                        existWaterDrank.setCount(existWaterDrank.getCount() + 1);
+                        waterDrinkRepository.save(existWaterDrank);
+                        damStatus.setWaterDrinkCount(Long.valueOf(existWaterDrank.getCount()));
+                    } else {
+                        WaterDrink waterDrink = new WaterDrink();
+                        waterDrink.setDamId(dam.getId());
+                        waterDrink.setCount(1);
+                        waterDrinkRepository.save(waterDrink);
+                        damStatus.setWaterDrinkCount(Long.valueOf( 1));
+                    }
+                }
+            }
+
             damStatusRepository.save(damStatus);
             insertMobility(dam);
 
@@ -287,6 +319,9 @@ public class DamService {
                     flagSet.add(flagOfTab);
                     dam.setFlag(flagSet);
                     damRepository.save(dam);
+                    HistoricalFlag historicalFlag = new HistoricalFlag(dam.getId(), flagOfTab.getId(), "system");
+                    historicalFlagRepository.save(historicalFlag);
+
                 } catch (Exception e) {
                 }
 
@@ -347,8 +382,8 @@ public class DamService {
 
     public Dam updateFlag(Long damId, Long flagId, Long value) {
         Dam dam = damRepository.findDam(damId + "").orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messageSource.getMessage("dam.notFound", null, null)));
+        Flag flag = flagRepository.findById(flagId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messageSource.getMessage("flag.notFound", null, null)));
         if (value == 0) {
-            Flag flag = flagRepository.findById(flagId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, messageSource.getMessage("flag.notFound", null, null)));
             Set<Flag> flags = dam.getFlag();
             if (!flags.stream().filter(f -> f.getId() == flagId).collect(Collectors.toList()).isEmpty()) {
                 try {
@@ -361,6 +396,9 @@ public class DamService {
             } else {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "flag.notFound");
             }
+        } else {
+            HistoricalFlag historicalFlag = new HistoricalFlag(dam.getId(), flag.getId(), "user");
+            historicalFlagRepository.save(historicalFlag);
         }
         return dam;
 
@@ -408,13 +446,15 @@ public class DamService {
         Dashboard dashboard = new Dashboard();
 
 
-        String today = DateUtils.addDaysToJalaliDate( BaseDateUtils.getTodayJalali(), 1);
+        String today = DateUtils.addDaysToJalaliDate(BaseDateUtils.getTodayJalali(), 1);
         String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
-        if (BaseCommonUtils.isNull(fromDate) ){
-            fromDate=lastMonth.replace("/","-");
+        if (BaseCommonUtils.isNull(fromDate)) {
+            fromDate = lastMonth.replace("/", "-");
         }
-        if (BaseCommonUtils.isNull(toDate) ){
-            toDate=today.replace("/","-");
+        if (BaseCommonUtils.isNull(toDate)) {
+            toDate = today.replace("/", "-");
+        } else {
+            toDate = DateUtils.addDaysToJalaliDate(toDate.replace("-", "/"), 1);
         }
 
 
@@ -553,6 +593,8 @@ public class DamService {
         chartList.add(dynamicCharts);
 
         Damdari damdari = damdariRepository.findDamdariById(Long.parseLong(damdariId));
+        if (damdari == null)
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "damdari.notFound");
         List<DamParam> damParams = damParamRepository.findDamParamByDamdari(damdari);
 
 //             ,دما
@@ -563,17 +605,6 @@ public class DamService {
         Float minTemp = damParams.get(0).getMin();
         Float maxPh = damParams.get(1).getMax();
         Float minPh = damParams.get(1).getMin();
-
-        //chart no 3
-        dynamicCharts = new DynamicCharts();
-        dynamicCharts.setPosition(4);
-        dynamicCharts.setLimitMin(minPh);
-        dynamicCharts.setLimitMax(maxPh);
-        dynamicCharts.setChartTitle("میانگین PH");
-        dynamicCharts.setType("linear");
-        dynamicCharts.setChartName("averageOfPH");
-        dynamicCharts.setData(damRepository.avgOfPhChartDto(damdariId, fromDate, toDate));
-        chartList.add(dynamicCharts);
 
 
         //chart no 3
@@ -590,7 +621,7 @@ public class DamService {
         //chart no 4
         dynamicCharts = new DynamicCharts();
         dynamicCharts.setPosition(6);
-        dynamicCharts.setChartTitle("میزان مصرف علوفه در هر ماه");
+        dynamicCharts.setChartTitle("میزان مصرف علوفه");
         dynamicCharts.setType("linear");
         dynamicCharts.setChartName("averageOfFodder");
         dynamicCharts.setData(damRepository.amountOfFodderChartDto(damdariId, fromDate, toDate));
@@ -600,12 +631,23 @@ public class DamService {
         //chart no 5
         dynamicCharts = new DynamicCharts();
         dynamicCharts.setPosition(7);
-        dynamicCharts.setChartTitle("میزان مصرف آب در هر ماه");
+        dynamicCharts.setChartTitle("میزان مصرف آب");
         dynamicCharts.setChartName("averageOfWater");
         dynamicCharts.setType("linear");
         dynamicCharts.setData(damRepository.amountOfWaterChartDto(damdariId, fromDate, toDate));
         chartList.add(dynamicCharts);
 
+
+        //chart no 3
+        dynamicCharts = new DynamicCharts();
+        dynamicCharts.setPosition(4);
+        dynamicCharts.setLimitMin(minPh);
+        dynamicCharts.setLimitMax(maxPh);
+        dynamicCharts.setChartTitle("میانگین PH");
+        dynamicCharts.setType("linear");
+        dynamicCharts.setChartName("averageOfPH");
+        dynamicCharts.setData(damRepository.avgOfPhChartDto(damdariId, fromDate, toDate));
+        chartList.add(dynamicCharts);
 
 //        //chart no 5
 //        dynamicCharts = new DynamicCharts();
@@ -667,7 +709,7 @@ public class DamService {
                 PageRequest.of(page, perPage, Sort.by(sort).ascending());
         Dam dam = damRepository.findDam(damId + "").orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "dam.notFound"));
 
-        return impDateRepository.findAllByDam(dam, sortedAndPagination);
+        return impDateRepository.findLastImpDate(damId);
     }
 
     public List<DamStatus> findAllDamStatusByDate(String sort,
@@ -727,19 +769,21 @@ public class DamService {
 //            1,دما
 //            2,PH
 //            3,فعالیت
-        String today = BaseDateUtils.getTodayJalali();
+        String today = DateUtils.addDaysToJalaliDate(BaseDateUtils.getTodayJalali(), 1);
         String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
-        if (BaseCommonUtils.isNull(fromDate) ){
-            fromDate=lastMonth.replace("/","-");
+        if (BaseCommonUtils.isNull(fromDate)) {
+            fromDate = lastMonth.replace("/", "-");
         }
-        if (BaseCommonUtils.isNull(toDate) ){
-            toDate=today.replace("/","-");
+        if (BaseCommonUtils.isNull(toDate)) {
+            toDate = today.replace("/", "-");
+        } else {
+            toDate = DateUtils.addDaysToJalaliDate(toDate.replace("-", "/"), 1);
         }
 
         Float maxTemp = damParams.get(0).getMax();
         Float minTemp = damParams.get(0).getMin();
 
-        Float maxPh= damParams.get(1).getMax();
+        Float maxPh = damParams.get(1).getMax();
         Float minPh = damParams.get(1).getMin();
 
         List<DynamicCharts> chartList = new ArrayList<>();

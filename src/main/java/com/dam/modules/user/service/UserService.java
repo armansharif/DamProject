@@ -97,7 +97,7 @@ public class UserService implements UserDetailsService {
                 JSONObject resJson = new JSONObject();
                 resJson.put("code", 200);
                 resJson.put("status", "fail");
-                resJson.put("message", "User not found");
+                resJson.put("message", messageSource.getMessage("user.notFound", null, Locale.getDefault()));
                 return resJson.toString();
             }
             if (user != null) {
@@ -315,7 +315,7 @@ public class UserService implements UserDetailsService {
     public Users checkVerificationUser(String mobile, String code) {
         Users user = usersRepository.validateVerificationCode(mobile, code).orElse(null);
         if (user == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, messageSource.getMessage("user.token.expired", null, null));
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "user.token.expired");
         return user;
     }
 

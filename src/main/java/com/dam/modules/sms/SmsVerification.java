@@ -3,12 +3,14 @@ package com.dam.modules.sms;
 import com.dam.modules.convert.ConvertEnFa;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Random;
 
 @Component
@@ -16,13 +18,15 @@ public class SmsVerification {
 
 
     private final ConvertEnFa convertEnFa;
+    private MessageSource messageSource;
 
 
     private String USER_AGENT = "Mozilla/5.0";
 
     @Autowired
-    public SmsVerification(ConvertEnFa convertEnFa) {
+    public SmsVerification(ConvertEnFa convertEnFa, MessageSource messageSource) {
         this.convertEnFa = convertEnFa;
+        this.messageSource = messageSource;
     }
 
 
@@ -235,11 +239,12 @@ public class SmsVerification {
             if (IsSuccessful) {
                 resJson.put("code", 200);
                 resJson.put("status", "success");
-                resJson.put("message", "Verification code sent successfully.");
+                resJson.put("message",  messageSource.getMessage("verification.code.successful", null, Locale.getDefault()));
             } else {
                 resJson.put("code", 401);
                 resJson.put("status", "fail");
-                resJson.put("message", "Unfortunately, there is a problem");
+                //"Unfortunately, there is a problem"
+                resJson.put("message", messageSource.getMessage("verification.code.failed", null, Locale.getDefault()));
             }
         } else {
 
@@ -259,7 +264,7 @@ public class SmsVerification {
 
             resJson.put("code", 401);
             resJson.put("status", "fail");
-            resJson.put("message", "Unfortunately, there is a problem");
+            resJson.put("message",  messageSource.getMessage("verification.code.failed", null, Locale.getDefault()));
         }
         return resJson.toString();
     }

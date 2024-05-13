@@ -319,9 +319,9 @@ public class DamController {
                                                 @PathVariable(required = false) Long damId,
                                                 @PathVariable(required = false) Long flagId,
                                                 @RequestParam(required = false) Long value) {
-            Dam dam = damService.updateFlag(damId, flagId,value);
-            return ResponseEntity.ok()
-                    .body(dam);
+        Dam dam = damService.updateFlag(damId, flagId, value);
+        return ResponseEntity.ok()
+                .body(dam);
 
     }
 
@@ -435,6 +435,10 @@ public class DamController {
                     HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
+    }
+    @GetMapping(value = {Routes.Get_dam_historical_flag})
+    public List<HistoricalFlag> getHistoricalFlags(@PathVariable(required = false) Long damId) {
+        return damService.findAllHistoricalFlags(damId);
     }
 
 

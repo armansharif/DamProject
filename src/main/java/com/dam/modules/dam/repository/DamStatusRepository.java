@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface DamStatusRepository extends JpaRepository<DamStatus,Long> {
+public interface DamStatusRepository extends JpaRepository<DamStatus, Long> {
 
 
     @Query(nativeQuery = true, value = "select * from dam_status where dam_id =:damId ")
@@ -19,13 +19,13 @@ public interface DamStatusRepository extends JpaRepository<DamStatus,Long> {
             " ( :damId is null or  damId =:damId)  OR " +
             " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )   " +
             " )")
-    List<String> findAllDamGps(@Param("damId") String damId,@Param("damdariId") String damdariId, Pageable pageable);
+    List<String> findAllDamGps(@Param("damId") String damId, @Param("damdariId") String damdariId, Pageable pageable);
 
     @Query(nativeQuery = true, value = "select * from dam_status where  id = (select MAX(id) from dam_status where dam_id =:damId )")
-     DamStatus   findLastDamStatus(@Param("damId") String damId );
+    DamStatus findLastDamStatus(@Param("damId") String damId);
 
     @Query(nativeQuery = true, value = "select * from dam_status where dam_id =:damId   AND ( :fromDate is null or  pdate(created_at) >= :fromDate)     " +
             " AND ( :toDate is null or  pdate(created_at) <= :toDate)  ")
-    List<DamStatus> findAllDamStatus(@Param("damId") String damId , @Param("fromDate") String fromDate, @Param("toDate") String toDate, Pageable pageable);
+    List<DamStatus> findAllDamStatus(@Param("damId") String damId, @Param("fromDate") String fromDate, @Param("toDate") String toDate, Pageable pageable);
 
 }

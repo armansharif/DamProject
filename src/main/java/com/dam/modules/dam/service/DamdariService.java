@@ -1,5 +1,6 @@
 package com.dam.modules.dam.service;
 
+import com.dam.commons.utils.BaseDateUtils;
 import com.dam.modules.dam.model.DamParam;
 import com.dam.modules.dam.model.Damdari;
 import com.dam.modules.dam.model.Milking;
@@ -45,47 +46,61 @@ public class DamdariService {
         return damdariRepository.findAllDamdari(sortedAndPagination);
     }
 
-    public Damdari findDamdari(Long id){
+    public Damdari findDamdari(Long id) {
         return damdariRepository.findDamdariById(id);
     }
 
-    public List<DamParam> findDamdariParam(Long damdariId){
+    public List<DamParam> findDamdariParam(Long damdariId) {
         Damdari damdari = findDamdari(damdariId);
-        return damParamRepository.findDamParamByDamdari(damdari) ;
+        return damParamRepository.findDamParamByDamdari(damdari);
     }
 
 
-
-    public void saveDamParam(DamParam damParam){
+    public void saveDamParam(DamParam damParam) {
         damParamRepository.save(damParam);
     }
 
-    public Optional<DamParam> getDamParamById(Long id){
+    public Optional<DamParam> getDamParamById(Long id) {
         return damParamRepository.findById(id);
     }
 
-    public Resource saveResource(Long damdariId, Long typeId, Long amount, String date){
+    public Resource saveResource(Long damdariId, Long typeId, Long amount, String date) {
         Damdari damdari = damdariRepository.findDamdariById(damdariId);
+
+
         Resource resource = new Resource();
         resource.setType(typeId);
         resource.setDamdari(damdari);
         resource.setAmount(amount);
         DateTimeFormatter DATEFORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate ld = LocalDate.parse(date, DATEFORMATTER);
+        LocalDate ld = LocalDate.parse(BaseDateUtils.getGregorianDate(date), DATEFORMATTER);
         LocalDateTime dateTime = LocalDateTime.of(ld, LocalDateTime.now().toLocalTime());
         resource.setCreatedAt(dateTime);
+
+        Resource existResource = resourceRepository.findResourceByDate(ld.toString(),typeId);
+        if (existResource != null) {
+            resource.setId(existResource.getId());
+        }
+
         return resourceRepository.save(resource);
     }
 
-    public Milking saveMilking(Long damdariId,  Double liter, String date){
+    public Milking saveMilking(Long damdariId, Double liter, String date) {
         Damdari damdari = damdariRepository.findDamdariById(damdariId);
         Milking milking = new Milking();
         milking.setDamdari(damdari);
         milking.setLiter(liter);
+
         DateTimeFormatter DATEFORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate ld = LocalDate.parse(date, DATEFORMATTER);
+        LocalDate ld = LocalDate.parse(BaseDateUtils.getGregorianDate(date), DATEFORMATTER);
         LocalDateTime dateTime = LocalDateTime.of(ld, LocalDateTime.now().toLocalTime());
         milking.setCreatedAt(dateTime);
+
+
+        Milking existMilking = milkingRepository.findMilkingByDate(ld.toString());
+        if (existMilking != null) {
+            milking.setId(existMilking.getId());
+        }
         return milkingRepository.save(milking);
     }
 }

@@ -21,7 +21,7 @@ public class DamStatus implements Serializable {
     private Long id;
     private String gPS;
     private Long battery;
-
+    private Long waterDrinkCount=0L;
     private Long aCCX;
     private Long aCCY;
     private Long aCCZ;
@@ -52,8 +52,7 @@ public class DamStatus implements Serializable {
     private String receivedAt;
 
     private String gatewayId;
-    private String    eui;
-
+    private String eui;
 
 
     @Column(precision = 8, scale = 2)

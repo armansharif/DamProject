@@ -58,6 +58,8 @@ public class Routes {
     public final static String POST_dam_add = ROOT + "/dam";
 
     public final static String PUT_dam_flag = ROOT + "/dam/{damId}/flag/{flagId}";
+
+    public final static String Get_dam_historical_flag = ROOT + "/dam/{damId}/historicalFlag/";
     public final static String DELETE_dam_delete = ROOT + "/dam/{id}";
 
     public final static String PUT_dam_edit = ROOT + "/dam/{id}";

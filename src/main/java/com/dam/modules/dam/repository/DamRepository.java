@@ -113,21 +113,21 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             " ")
     List<ChartDto> locationOfDamChartDto(@Param("damdariId") String damdariId);
 
-    @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "  AS title, SUM(amount) AS value " +
+    @Query(nativeQuery = true, value = "select   " + fullDateStringInAlies + "  AS title, SUM(amount) AS value " +
             "  from resource WHERE 1=1 and type = " + Consts.TYPE_OF_RESOURCE_FODDER + " and " +
             " ( :damdariId is null or  damdari_id =:damdariId)     "
             + fromDateToDateWhereCondition +
-            "   GROUP BY   " +
+            "   GROUP BY  pday(created_at), " +
             "        PMONTH(created_at), " +
             "        pyear(created_at)" +
             yearMonthDateStringOrder)
     List<ChartDto> amountOfFodderChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
-    @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "  AS title, SUM(amount) AS value " +
+    @Query(nativeQuery = true, value = "select   " + fullDateStringInAlies + "  AS title, SUM(amount) AS value " +
             "  from resource WHERE 1=1 and type = " + Consts.TYPE_OF_RESOURCE_WATER + " and " +
             " ( :damdariId is null or  damdari_id =:damdariId)     " +
             fromDateToDateWhereCondition +
-            "   GROUP BY   " +
+            "   GROUP BY   pday(created_at)," +
             "        PMONTH(created_at), " +
             "        pyear(created_at)" +
             yearMonthDateStringOrder)
