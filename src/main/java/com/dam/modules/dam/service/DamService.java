@@ -295,6 +295,8 @@ public class DamService {
                         waterDrinkRepository.save(waterDrink);
                         damStatus.setWaterDrinkCount(Long.valueOf( 1));
                     }
+                }else{
+                    damStatus.setWaterDrinkCount(lastDamstatus.getWaterDrinkCount());
                 }
             }
 

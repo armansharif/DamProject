@@ -184,7 +184,7 @@ public class UserController {
 
         Users user = userService.findUserByMobile(mobile);
         JSONObject okJson = new JSONObject();
-        if (mobile.equals("09123456789") && code.equals("1234")) {
+        if (mobile.equals("09123456789") && code.equals("12345")) {
             //ورود بدون کد
         } else {
             userService.checkVerificationUser(mobile, code);
