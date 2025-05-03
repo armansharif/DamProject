@@ -21,6 +21,8 @@ public class Consts {
     //        "goshti"	"گوشتی"
     public static final String FLAG_OF_ANIMAL_GOSHTI = "8";
 
+    public static final String FLAG_OF_ANIMAL_KHOSHK = "9";
+
     //  غذایا علوفه
     public static final String TYPE_OF_RESOURCE_FODDER = "1";
 

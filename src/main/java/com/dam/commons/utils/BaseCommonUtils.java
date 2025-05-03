@@ -14,10 +14,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.dam.commons.utils.BaseDateUtils.getDateDiff;
 
 public class BaseCommonUtils {
     private static String versionRevision;
@@ -310,4 +314,6 @@ public class BaseCommonUtils {
         }
         return objects;
     }
+
+
 }

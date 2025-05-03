@@ -5,11 +5,9 @@ import com.dam.modules.dam.model.Dam;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +16,7 @@ import java.util.Optional;
 public interface DamRepository extends JpaRepository<Dam, Long> {
 
     String fullDateStringInAlies = " CONCAT(pyear(created_at),'-',LPAD(PMONTH(created_at), 2, '0'),'-', LPAD(pday(created_at), 2, '0')) ";
-    String fullDateTimeStringInAlies = "  CONCAT(pyear(created_at),'-',LPAD(PMONTH(created_at), 2, '0'),'-', LPAD(pday(created_at), 2, '0'), ' ',TIME(created_at) ) ";
+    String fullDateTimeStringInAlies = "  CONCAT(pyear(created_at),'-',LPAD(PMONTH(created_at), 2, '0'),'-', LPAD(pday(created_at), 2, '0'), ' ',DATE_FORMAT(created_at,'%H:%i:%s') ) ";
     String yearMonthDateStringInAlies = " CONCAT(pyear(created_at),'-',LPAD(PMONTH(created_at), 2, '0')) ";
 
 
@@ -104,6 +102,11 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             "  group by type_id ")
     List<ChartDto> typeOfDamChartDto(@Param("damdariId") String damdariId);
 
+    @Query(nativeQuery = true, value = "   SELECT  f.farsi_name AS title, count(*) AS value  " +
+            " from dam_flag df, dam d, flag f WHERE d.id = df.dam_id    AND f.id=df.flag_id " +
+            " AND f.id IN ( "+Consts.FLAG_OF_ANIMAL_SHIRI+" , "+Consts.FLAG_OF_ANIMAL_KHOSHK+" ) " +
+            "   group by flag_id ")
+    List<ChartDto> typeOfDamChartByFlagDto(@Param("damdariId") String damdariId);
 
     @Query(nativeQuery = true, value = "SELECT (SELECT NAME FROM city WHERE id=city_id) AS title ,COUNT(*) AS value " +
             " FROM dam d , damdari dm  " +
@@ -168,6 +171,13 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             fullDateStringOrder)
     List<ChartDto> temperatureOfDamChartDto(@Param("damId") String damId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
+    @Query(nativeQuery = true, value = "select " + fullDateTimeStringInAlies + "  AS title, CAST(`value` AS UNSIGNED)    AS value " +
+            "  from mobility WHERE 1=1 and `value` IS NOT NULL and" +
+            "  ( :damId is null or  dam_id =:damId)     " +
+            fromDateToDateWhereCondition +
+            fullDateStringOrder)
+    List<ChartDto> valueOfMobilityChartDto(@Param("damId") String damId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
+
     @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title,ROUND(  AVG(temperature) ,2) AS value " +
             "  from dam_status WHERE 1=1 and temperature IS NOT NULL and" +
             " ( :damdariId is null or (dam_id In  (select id from dam where  damdari_id =:damdariId ) ) )     " +
@@ -178,10 +188,19 @@ public interface DamRepository extends JpaRepository<Dam, Long> {
             fullDateStringOrder)
     List<ChartDto> avgOfTemperatureChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
 
+    @Query(nativeQuery = true, value = "select " + fullDateStringInAlies + "  AS title, CAST(AVG(count) AS UNSIGNED) AS value " +
+            "  from water_drink where 1=1 and  created_at between date_sub(now(),INTERVAL 1 WEEK) and now() " +
+            "   GROUP BY pday(created_at),  " +
+            "        PMONTH(created_at), " +
+            "        pyear(created_at)" +
+            fullDateStringOrder)
+    List<ChartDto> avgOfCODWChartDto(@Param("damdariId") String damdariId, @Param("fromDate") String fromDate, @Param("toDate") String toDate);
+    //count of drank water
+
     @Query(nativeQuery = true, value = "select   " + yearMonthDateStringInAlies + "    AS title, count(*) AS value " +
             "  from dam WHERE 1=1 and " +
             " ( :damdariId is null or  damdari_id =:damdariId)     " +
-            "   GROUP BY   " +
+            "   GROUP BY   pday(created_at)," +
             "        PMONTH(created_at), " +
             "        pyear(created_at)" +
             yearMonthDateStringOrder)

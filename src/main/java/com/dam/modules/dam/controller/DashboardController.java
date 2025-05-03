@@ -1,6 +1,10 @@
 package com.dam.modules.dam.controller;
 
 import com.dam.commons.Routes;
+import com.dam.commons.utils.BaseCommonUtils;
+import com.dam.commons.utils.BaseDateUtils;
+import com.dam.commons.utils.DateUtils;
+import com.dam.commons.utils.NumberUtils;
 import com.dam.config.JsonResponseBodyTemplate;
 import com.dam.modules.dam.model.Dam;
 import com.dam.modules.dam.model.Damdari;
@@ -26,7 +30,7 @@ public class DashboardController {
 
     private DamdariService damdariService;
 
-    private DamService  damService;
+    private DamService damService;
 
     @Autowired
     public DashboardController(UserService userService, DamdariService damdariService, DamService damService) {
@@ -35,15 +39,15 @@ public class DashboardController {
         this.damService = damService;
     }
 
-    @ApiOperation(value = "DateFormat = 1402-02-20" )
-    @GetMapping(value = {Routes.Get_dashboard,Routes.Get_dashboard_damdariId})
+    @ApiOperation(value = "DateFormat = 1402-02-20")
+    @GetMapping(value = {Routes.Get_dashboard, Routes.Get_dashboard_damdariId})
     public ResponseEntity<Object> getDashboard(
             @PathVariable(required = false) String damdariId,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
             HttpServletResponse response) {
         try {
-           Dashboard dashboard = damService.getDashboardData(damdariId,fromDate,toDate);
+            Dashboard dashboard = damService.getDashboardData(damdariId, fromDate, toDate);
             return ResponseEntity.ok()
                     .body(dashboard);
         } catch (Exception e) {

@@ -21,7 +21,7 @@ public class DamStatus implements Serializable {
     private Long id;
     private String gPS;
     private Long battery;
-    private Long waterDrinkCount=0L;
+    private Long waterDrinkCount;
     private Long aCCX;
     private Long aCCY;
     private Long aCCZ;

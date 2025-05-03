@@ -5,6 +5,7 @@ import com.dam.commons.Routes;
 import com.dam.commons.utils.BaseCommonUtils;
 import com.dam.commons.utils.BaseDateUtils;
 import com.dam.commons.utils.DateUtils;
+import com.dam.commons.utils.NumberUtils;
 import com.dam.modules.dam.model.*;
 import com.dam.modules.dam.repository.*;
 
@@ -34,9 +35,8 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -277,28 +277,58 @@ public class DamService {
                 damStatus.setGPS(dam.getDamdari().getGPS());
             }
             DamStatus lastDamstatus = damStatusRepository.findLastDamStatus(dam.getId() + "");
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = new Date();
+            WaterDrink existWaterDrank = waterDrinkRepository.findWaterDrinkByDate(dateFormat.format(date), dam.getId());
+            if (BaseCommonUtils.isNotNull(temperature) && lastDamstatus !=null && BaseCommonUtils.isNotNull(lastDamstatus.getTemperature())) {
+                Float lastTemp = lastDamstatus.getTemperature();
+                if (lastTemp > temperature) {
+                    Float deltaTemp = temperature - lastTemp;
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+                    Date nowDate = new Date();
+                    LocalDateTime ldt = lastDamstatus.getCreatedAt();
+                    Date lastDate = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+                    long diff = nowDate.getTime() - lastDate.getTime();
+                    long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
 
-            if (BaseCommonUtils.isNotNull(temperature) && BaseCommonUtils.isNotNull(lastDamstatus.getTemperature())) {
-                boolean drankWater = (( temperature* 100) / lastDamstatus.getTemperature() ) < 96.5;
-                if (drankWater) {
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                    Date date = new Date();
-                    WaterDrink existWaterDrank = waterDrinkRepository.findWaterDrinkByDate(dateFormat.format(date), dam.getId());
+                    //    boolean drankWater = (deltaTemp / minutes) < -0.04;
+                    boolean drankWater = Math.abs(deltaTemp) > 1.1;
+                    if (drankWater) {
+                        if (existWaterDrank != null) {
+                            existWaterDrank.setCount(existWaterDrank.getCount() + 1);
+                            waterDrinkRepository.save(existWaterDrank);
+                            damStatus.setWaterDrinkCount(Long.valueOf(existWaterDrank.getCount()));
+                        } else {
+                            WaterDrink waterDrink = new WaterDrink();
+                            waterDrink.setDamId(dam.getId());
+                            waterDrink.setCount(1);
+                            waterDrinkRepository.save(waterDrink);
+                            damStatus.setWaterDrinkCount(Long.valueOf(1));
+                        }
+                    } else {
+                        if (existWaterDrank != null) {
+                            damStatus.setWaterDrinkCount(Long.valueOf(existWaterDrank.getCount()));
+                        } else {
+                            damStatus.setWaterDrinkCount(lastDamstatus.getWaterDrinkCount());
+                        }
+                    }
+                } else {
                     if (existWaterDrank != null) {
-                        existWaterDrank.setCount(existWaterDrank.getCount() + 1);
-                        waterDrinkRepository.save(existWaterDrank);
                         damStatus.setWaterDrinkCount(Long.valueOf(existWaterDrank.getCount()));
                     } else {
-                        WaterDrink waterDrink = new WaterDrink();
-                        waterDrink.setDamId(dam.getId());
-                        waterDrink.setCount(1);
-                        waterDrinkRepository.save(waterDrink);
-                        damStatus.setWaterDrinkCount(Long.valueOf( 1));
+                        damStatus.setWaterDrinkCount(lastDamstatus.getWaterDrinkCount());
                     }
-                }else{
+                }
+            } else {
+                if (existWaterDrank != null) {
+                    damStatus.setWaterDrinkCount(Long.valueOf(existWaterDrank.getCount()));
+                } else if(lastDamstatus !=null) {
                     damStatus.setWaterDrinkCount(lastDamstatus.getWaterDrinkCount());
+                }else {
+                    damStatus.setWaterDrinkCount(1l);
                 }
             }
+
 
             damStatusRepository.save(damStatus);
             insertMobility(dam);
@@ -560,6 +590,15 @@ public class DamService {
         dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_ASTANEH_ZAYEMAN)));//
         infos.add(dynamicInfos);
 
+        Long countOfKhoshk = damRepository.countOf(damdariId, Arrays.asList(Consts.FLAG_OF_ANIMAL_KHOSHK));
+        dynamicInfos = new DynamicInfos();
+        dynamicInfos.setPosition(7);
+        dynamicInfos.setTitle("خشک");
+        dynamicInfos.setIcon("../icon/khoshk.png");
+        dynamicInfos.setFlags(Arrays.asList(Integer.parseInt(Consts.FLAG_OF_ANIMAL_KHOSHK)));//
+        dynamicInfos.setData(countOfKhoshk.toString());
+        infos.add(dynamicInfos);
+
         dashboard.setInfos(infos);
 
         //chart no 1
@@ -567,7 +606,7 @@ public class DamService {
         dynamicCharts.setPosition(1);
         dynamicCharts.setType("pie");
         dynamicCharts.setChartTitle("تنوع دام های هوشمند");
-        dynamicCharts.setData(damRepository.typeOfDamChartDto(damdariId));
+        dynamicCharts.setData(damRepository.typeOfDamChartByFlagDto(damdariId));
         dynamicCharts.setChartName("typeOfDam");
         List<DynamicCharts> chartList = new ArrayList<>();
         chartList.add(dynamicCharts);
@@ -586,13 +625,14 @@ public class DamService {
 
 
         //chart no 3
-        dynamicCharts = new DynamicCharts();
-        dynamicCharts.setPosition(3);
-        dynamicCharts.setChartTitle("میزان شیر دهی");
-        dynamicCharts.setType("linear");
-        dynamicCharts.setChartName("amountOfMilking");
-        dynamicCharts.setData(damRepository.amountOfMilkingChartDto(damdariId, fromDate, toDate));
-        chartList.add(dynamicCharts);
+
+//        dynamicCharts = new DynamicCharts();
+//        dynamicCharts.setPosition(3);
+//        dynamicCharts.setChartTitle("میزان شیر دهی");
+//        dynamicCharts.setType("linear");
+//        dynamicCharts.setChartName("amountOfMilking");
+//        dynamicCharts.setData(damRepository.amountOfMilkingChartDto(damdariId, fromDate, toDate));
+//        chartList.add(dynamicCharts);
 
         Damdari damdari = damdariRepository.findDamdariById(Long.parseLong(damdariId));
         if (damdari == null)
@@ -620,36 +660,46 @@ public class DamService {
         dynamicCharts.setData(damRepository.avgOfTemperatureChartDto(damdariId, fromDate, toDate));
         chartList.add(dynamicCharts);
 
-        //chart no 4
+
         dynamicCharts = new DynamicCharts();
         dynamicCharts.setPosition(6);
-        dynamicCharts.setChartTitle("میزان مصرف علوفه");
+        dynamicCharts.setChartTitle("میانگین تعداد دفعات آب خوردن");
         dynamicCharts.setType("linear");
-        dynamicCharts.setChartName("averageOfFodder");
-        dynamicCharts.setData(damRepository.amountOfFodderChartDto(damdariId, fromDate, toDate));
+        dynamicCharts.setChartName("averageOfDrinkWater");
+        dynamicCharts.setData(damRepository.avgOfCODWChartDto(damdariId, fromDate, toDate));
         chartList.add(dynamicCharts);
+
+
+        //chart no 4
+//        dynamicCharts = new DynamicCharts();
+//        dynamicCharts.setPosition(6);
+//        dynamicCharts.setChartTitle("میزان مصرف علوفه");
+//        dynamicCharts.setType("linear");
+//        dynamicCharts.setChartName("averageOfFodder");
+//        dynamicCharts.setData(damRepository.amountOfFodderChartDto(damdariId, fromDate, toDate));
+//        chartList.add(dynamicCharts);
 
 
         //chart no 5
-        dynamicCharts = new DynamicCharts();
-        dynamicCharts.setPosition(7);
-        dynamicCharts.setChartTitle("میزان مصرف آب");
-        dynamicCharts.setChartName("averageOfWater");
-        dynamicCharts.setType("linear");
-        dynamicCharts.setData(damRepository.amountOfWaterChartDto(damdariId, fromDate, toDate));
-        chartList.add(dynamicCharts);
+//        dynamicCharts = new DynamicCharts();
+//        dynamicCharts.setPosition(7);
+//        dynamicCharts.setChartTitle("میزان مصرف آب");
+//        dynamicCharts.setChartName("averageOfWater");
+//        dynamicCharts.setType("linear");
+//        dynamicCharts.setData(damRepository.amountOfWaterChartDto(damdariId, fromDate, toDate));
+//        chartList.add(dynamicCharts);
 
 
         //chart no 3
-        dynamicCharts = new DynamicCharts();
-        dynamicCharts.setPosition(4);
-        dynamicCharts.setLimitMin(minPh);
-        dynamicCharts.setLimitMax(maxPh);
-        dynamicCharts.setChartTitle("میانگین PH");
-        dynamicCharts.setType("linear");
-        dynamicCharts.setChartName("averageOfPH");
-        dynamicCharts.setData(damRepository.avgOfPhChartDto(damdariId, fromDate, toDate));
-        chartList.add(dynamicCharts);
+//        dynamicCharts = new DynamicCharts();
+//        dynamicCharts.setPosition(4);
+//        dynamicCharts.setLimitMin(minPh);
+//        dynamicCharts.setLimitMax(maxPh);
+//        dynamicCharts.setChartTitle("میانگین PH");
+//        dynamicCharts.setType("linear");
+//        dynamicCharts.setChartName("averageOfPH");
+//        dynamicCharts.setData(damRepository.avgOfPhChartDto(damdariId, fromDate, toDate));
+//        chartList.add(dynamicCharts);
 
 //        //chart no 5
 //        dynamicCharts = new DynamicCharts();
@@ -763,7 +813,13 @@ public class DamService {
 
     public Dam findDam(String damId, String fromDate, String toDate) {
         Dam dam = damRepository.findDam(damId).get();
-        dam.setLastDamStatus(findLastDamStatus(damId));
+        DamStatus lastDamStatus = findLastDamStatus(damId);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = new Date();
+        WaterDrink existWaterDrank = waterDrinkRepository.findWaterDrinkByDate(dateFormat.format(date), dam.getId());
+        if (BaseCommonUtils.isNotNull(existWaterDrank))
+            lastDamStatus.setWaterDrinkCount(NumberUtils.longValue(existWaterDrank.getCount()));
+        dam.setLastDamStatus(lastDamStatus);
         dam.setLastMobility(findLastMobility(damId));
 
         List<DamParam> damParams = damParamRepository.findDamParamByDamdari(dam.getDamdari());
@@ -772,9 +828,12 @@ public class DamService {
 //            2,PH
 //            3,فعالیت
         String today = DateUtils.addDaysToJalaliDate(BaseDateUtils.getTodayJalali(), 1);
+        String preday = DateUtils.addDaysToJalaliDate(BaseDateUtils.getTodayJalali(), -1);
         String lastMonth = DateUtils.addDaysToJalaliDate(today, -30);
+        String fromDateToday = fromDate;
         if (BaseCommonUtils.isNull(fromDate)) {
             fromDate = lastMonth.replace("/", "-");
+            fromDateToday = preday.replace("/", "-");
         }
         if (BaseCommonUtils.isNull(toDate)) {
             toDate = today.replace("/", "-");
@@ -782,6 +841,8 @@ public class DamService {
             toDate = DateUtils.addDaysToJalaliDate(toDate.replace("-", "/"), 1);
         }
 
+        today = today.replace("/", "-");
+        preday = preday.replace("/", "-");
         Float maxTemp = damParams.get(0).getMax();
         Float minTemp = damParams.get(0).getMin();
 
@@ -791,14 +852,14 @@ public class DamService {
         List<DynamicCharts> chartList = new ArrayList<>();
         DynamicCharts dynamicCharts = new DynamicCharts();
         //chart no 1
-        dynamicCharts.setPosition(2);
-        dynamicCharts.setChartTitle("PH");
-        dynamicCharts.setType("linear");
-        dynamicCharts.setChartName("PH");
-        dynamicCharts.setLimitMax(maxPh);
-        dynamicCharts.setLimitMin(minPh);
-        dynamicCharts.setData(damRepository.phOfDamChartDto(damId, fromDate, toDate));
-        chartList.add(dynamicCharts);
+//        dynamicCharts.setPosition(2);
+//        dynamicCharts.setChartTitle("PH");
+//        dynamicCharts.setType("linear");
+//        dynamicCharts.setChartName("PH");
+//        dynamicCharts.setLimitMax(maxPh);
+//        dynamicCharts.setLimitMin(minPh);
+//        dynamicCharts.setData(damRepository.phOfDamChartDto(damId, fromDate, toDate));
+//        chartList.add(dynamicCharts);
 
         //chart no 2
         dynamicCharts = new DynamicCharts();
@@ -808,9 +869,17 @@ public class DamService {
         dynamicCharts.setChartName("temp");
         dynamicCharts.setLimitMax(maxTemp);
         dynamicCharts.setLimitMin(minTemp);
-        dynamicCharts.setData(damRepository.temperatureOfDamChartDto(damId, fromDate, toDate));
+        dynamicCharts.setData(damRepository.temperatureOfDamChartDto(damId, preday, today));
         chartList.add(dynamicCharts);
 
+
+        dynamicCharts = new DynamicCharts();
+        dynamicCharts.setPosition(2);
+        dynamicCharts.setChartTitle("تحرک دام");
+        dynamicCharts.setType("linear");
+        dynamicCharts.setChartName("averageOfMobility");
+        dynamicCharts.setData(damRepository.valueOfMobilityChartDto(damId, preday, today));
+        chartList.add(dynamicCharts);
         dam.setCharts(chartList);
 
         return dam;
@@ -819,31 +888,34 @@ public class DamService {
     public void insertMobility(Dam dam) throws ParseException {
         String today = BaseDateUtils.getTodayJalali();
 
-        if (mobilityRepository.existsMobilityInDate(today, dam.getId()) == 0) {
+        //   if (mobilityRepository.existsMobilityInDate(today, dam.getId()) == 0) {
 
-            Long mobilityValue = 0l;
-            List<MobilityDto> mobilityDto = mobilityRepository.getGastricMomentum(dam.getId());
-            if (mobilityDto.size() == 2) {
-                //2024-03-08 07:33:58
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
-                Date firstDate = sdf.parse(mobilityDto.get(0).getDate());
-                Date secondDate = sdf.parse(mobilityDto.get(1).getDate());
-                long diff = secondDate.getTime() - firstDate.getTime();
-                long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
-                mobilityValue = (mobilityDto.get(1).getGastric() - mobilityDto.get(0).getGastric()) / minutes;
-                Mobility mobility = new Mobility();
-                mobility.setValue(mobilityValue);
-                mobility.setDate(today);
-                mobility.setDam(dam);
-                if (mobilityValue > Consts.MAX_NORMAL_MOBILITY) {
-                    mobility.setStatus(messageSource.getMessage("mobility.high", null, Locale.getDefault()));
-                } else if (mobilityValue < Consts.MIN_NORMAL_MOBILITY) {
-                    mobility.setStatus(messageSource.getMessage("mobility.low", null, Locale.getDefault()));
-                } else {
-                    mobility.setStatus(messageSource.getMessage("mobility.normal", null, Locale.getDefault()));
-                }
-                mobilityRepository.save(mobility);
+        Long mobilityValue = 0l;
+        List<MobilityDto> mobilityDto = mobilityRepository.getGastricMomentum(dam.getId());
+        if (mobilityDto.size() == 2) {
+            //2024-03-08 07:33:58
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+            Date firstDate = sdf.parse(mobilityDto.get(1).getDate());
+            Date secondDate = sdf.parse(mobilityDto.get(0).getDate());
+            long diff = secondDate.getTime() - firstDate.getTime();
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
+            if (minutes == 0)
+                minutes = 1;
+            mobilityValue = (mobilityDto.get(0).getGastric() - mobilityDto.get(1).getGastric()) / minutes;
+            Mobility mobility = new Mobility();
+            mobility.setValue(mobilityValue);
+            mobility.setDate(today);
+            mobility.setDam(dam);
+            if (mobilityValue > Consts.MAX_NORMAL_MOBILITY) {
+                mobility.setStatus(messageSource.getMessage("mobility.high", null, Locale.getDefault()));
+            } else if (mobilityValue < Consts.MIN_NORMAL_MOBILITY) {
+                mobility.setStatus(messageSource.getMessage("mobility.low", null, Locale.getDefault()));
+            } else {
+                mobility.setStatus(messageSource.getMessage("mobility.normal", null, Locale.getDefault()));
             }
+            if (mobilityValue > 0)
+                mobilityRepository.save(mobility);
         }
+        //  }
     }
 }

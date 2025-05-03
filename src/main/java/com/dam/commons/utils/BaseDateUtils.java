@@ -439,4 +439,9 @@ public class BaseDateUtils {
     public static long getTimeEpoch(String time) {
         return LocalDate.now().atTime(LocalTime.parse(time)).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
+    public static String shiftDateBack(String inputDate) {
+        // محاسبه فاصله امروز تا تاریخ مرجع
+        int daysDiff = Math.abs( NumberUtils.integerValue(getDateDiff("1403/09/05", inputDate)))*-1;
+        return  DateUtils.addDaysToJalaliDate(inputDate, daysDiff);
+    }
 }

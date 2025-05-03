@@ -30,6 +30,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -441,5 +444,37 @@ public class DamController {
         return damService.findAllHistoricalFlags(damId);
     }
 
+    private String sanitizeFileName(String fileName) {
+        String restrictedCharacters = "/\\:*?\"<>|";
+        String sanitizedFileName = fileName.replaceAll("[" + restrictedCharacters + "]", "_");
+        System.out.println(sanitizedFileName);
+        return sanitizedFileName;
+    }
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, Object>> handleFileUploadUsingCurl(
+            @RequestParam("file") MultipartFile file) throws IOException {
 
+        Map<String, Object> response = new HashMap<>();
+        if (file.isEmpty()) {
+            // Handle empty file error
+            response.put("error", "File is empty.");
+            return ResponseEntity.badRequest().body(response);
+        }  else {
+            String sanitizedFileName = sanitizeFileName(file.getOriginalFilename());
+            // Check if the sanitized file name is different from the original file name
+            if (!sanitizedFileName.equals(file.getOriginalFilename())) {
+                // Handle file name with restricted characters error
+                response.put("error", "File name contains restricted characters. Please rename the file.");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            String rootReleaseFileStr = env.getProperty("dam.rootReleaseFile");
+            Path rootReleaseFile = Paths.get(rootReleaseFileStr);
+            String path = rootReleaseFile.toFile().getAbsolutePath();
+            byte[] bytes = file.getBytes();
+             Files.write(Paths.get(path + File.separator + sanitizedFileName), bytes);
+
+            return ResponseEntity.ok(response);
+        }
+    }
 }
