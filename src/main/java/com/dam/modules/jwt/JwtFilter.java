@@ -36,8 +36,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = request.getHeader(new JwtUtils().HEADER_STRING);
+        String jwt = request.getHeader(jwtUtils.HEADER_STRING);
 // && SecurityContextHolder.getContext().getAuthentication() == null
+
+        // اگر نبود، از پارامترهای کوئری یا فرم بگیریم
+        if (jwt == null || jwt.isEmpty()) {
+            jwt = JwtUtils.TOKEN_PREFIX+" "+request.getParameter("token");
+        }
         try {
             String pathInfo = request.getRequestURI();
 

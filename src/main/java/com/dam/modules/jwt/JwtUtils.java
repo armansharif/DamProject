@@ -73,6 +73,9 @@ public class JwtUtils {
     public Long getUserId(HttpServletRequest request) {
         logger.info("start getUserId()");
         String jwt = request.getHeader(HEADER_STRING);
+        if (jwt == null || jwt.isEmpty()) {
+            jwt = TOKEN_PREFIX+" "+request.getParameter("token");
+        }
         if (jwt != null) {
             if (jwt.startsWith(new JwtUtils().TOKEN_PREFIX)) {
                 jwt = jwt.replace(TOKEN_PREFIX, "");
